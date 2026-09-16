@@ -1,0 +1,66 @@
+﻿S. No.,Teacher Name,Designation,Room No.,Faulty Code,Email,Area of Specialization
+1,Dr. R.S. Kaler,Sr.Professor,C107,RSK,rskaler@thapar.edu,Fiber Optic Communication
+2,Dr. Rajesh Khanna,Professor,C215,RAK,rkhanna@thapar.edu,Wireless Communication and Antenna
+3,Dr. Sanjay Sharma,Professor,AB205,SS,sanjay.sharma@thapar.edu,Wireless Communication/Signal Processing
+4,Dr. Kulbir Singh,Professor & Head ,BC205,KBS,ksingh@thapar.edu,Signal Processing and Image Forensics
+5,Dr. Alpana Agarwal,Professor,AB204,AA,alpana@thapar.edu,VLSI Circuit and System Design
+6,Dr. Mayank Kumar Rai,Professor,BC204,MKR,mkrai@thapar.edu,Modeling and Design of CNT and GNR based VLSI Interconnects
+7,Dr. Vinay Kumar,Professor,C336,VK,vinay.kumar@thapar.edu,"Deep Learning, Image and Video Processing"
+8,Dr. Ankush Kansal,Professor,AB206,ANK,akansal@thapar.edu,"Embedded Systems, Wireless Communication, Antenna Systems"
+9,Dr. Ravi Kumar,Professor,BC207,RVK,ravi.kumar@thapar.edu,Wireless Communication/Signal Processing
+10,Dr. Hem Dutt Joshi,Professor,C313,HDJ,hemdutt.joshi@thapar.edu,Wireless Communication
+11,Dr. Surbhi Sharma,Professor,AB207,SUS,surbhi.sharma@thapar.edu ,Wireless Communication
+12,Dr. Amit Kumar Kohli,Associate Professor,C315,AKK,akkohli@thapar.edu,Signal Processing/VLSI
+13,Dr. Sanjay Kumar,Associate Professor,C312,SNJ,sanjay.kumar@thapar.edu,Mathematical aspects of Signal Processing
+14,Dr. Hardeep Singh,Associate Professor,AB208,HS,hardeep@thapar.edu,Fiber Optic Communication
+15,Dr. Ashutosh Kumar Singh,Associate Professor,C310,AKS,aksingh@thapar.edu,Signal processing and Communication
+16,Dr. Karamjit Singh Sandha,Associate Professor,BC203   ,KSS,kssandha@thapar.edu,"VLSI Interconnects, MWCNT Based Interconnects, Optical Interconnects"
+17,Dr. Amanpreet Kaur-I,Associate Professor,C204A,AMK-I,amanpreet.kaur@thapar.edu,"Microstrip Antennas (MSA) for Wireless communications, Biomedical applications such as microwave imaging, Microwave Hyperthermia, and Blood Glucose Monitoring"
+18,Dr. Neeru Jindal,Associate Professor,BC204A,NJ,neeru.jindal@thapar.edu,"Machine Learning, Image and Video Processing"
+19,Dr. Rahul Upadhyay,Associate Professor,C335,RU,rahul.upadhyay@thapar.edu,"Biomedical Signal and Image Processing, Machine Learning, Brain Computer Interface"
+20,Dr. Hari Shankar Singh,Associate Professor,C308,HSS,harishankar.singh@thapar.edu,Microwave antennas for wireless and biomedical applications
+21,Dr. Manu Bansal,Associate Professor,B219,MB,mbansal@thapar.edu,"VLSI Design, Light Weight Cryptography and Steganography, Digital Signal Processing"
+22,Dr. Amit Mishra,Associate Professor,C302,AM,amit_mishra@thapar.edu,"Wireless Communication, Softcomputing"
+23,Dr. Anil Arora,Associate Professor,C306,AAR,anil.arora@thapar.edu,Micro-Electro-Mechanical Systems (MEMS) Design and Fabrication
+24,Dr. Harpreet Vohra,Associate Professor,C301,HVR,hvohra@thapar.edu,"VLSI Design, Image Processing and Machine Learning"
+25,Dr. Mohit Agarwal,Associate Professor – I ,FC104 (TAN Building),MA,mohit.agarwal@thapar.edu,"Microelctronics, Thin film Fabrication and Characterization"
+26,Dr. Jaswinder Kaur,Associate Professor – I ,BC206,JSK,jaswinder.kaur@thapar.edu,"Design and Development of Antenna for different Applications such as biomedcal and food quality evaluation, 5G MIMO antenna, UWB antenna, Flexible antenna for wearable and implantable applications, etc. "
+27,Dr. Anil Singh,Associate Professor – I,B219,AS,anils.rawat@thapar.edu,"CMOS Analog & Mixed Signal IC Design, Digital IC Design, FPGA, System Design"
+28,Dr. Bharat Garg,Associate Professor – I,C329,BG,bharat.garg@thapar.edu,VLSI Design for Efficient Digital Signal Processing
+29,Dr. Shireesh Kumar Rai,Associate Professor – I,C330,SKR,skumar.rai@thapar.edu,"Analog Signal Processing, VLSI Design"
+30,Dr. Mayank Agarwal,Associate Professor – I,B219,MKA,mayank.agarwal@thapar.edu,Microwave Engineering
+31,Dr. Ajay Kakkar,Assistant Professor-III,C307,AJK,ajay.kakkar@thapar.edu,"Electronics & Communication, Wireless Network Security"
+32,Dr. Rishikesh Pandey,Assistant Professor-III,C303,RPN,rpandey@thapar.edu,VLSI Design
+33,Dr. Sudhanshu Tyagi,Assistant Professor-III,C314,ST,s.tyagi@thapar.edu,"Wireless Sensor Networks, Sensor Cloud and Healthcare 4.0"
+34,Dr. Sumit Vyas,Assistant Professor-III,C311,SV,sumit.vyas@thapar.edu,"Microelectronics and VLSI, Nano-fabrication"
+35,Dr. Arun Kumar Chatterjee,Assistant Professor-III,C304,AKC,arun.chatterjee@thapar.edu,"Semiconductor Device Modeling, VLSI Design"
+36,Dr.  Amanpreet Kaur-II,Assistant Professor-III,C331,AMK II,aman.preet@thapar.edu,"Biomedical Image Processing, Biomedical Signal Processing, Wireless Communication"
+37,Dr. Sujit Kumar Patel,Assistant Professor-III,C338,SP,sujit.patel@thapar.edu,"Design of efficient FPGA-based VLSI architectures for biomedical signal processing, signal and image processing, cryptography system."
+38,Dr. Gaganpreet Kaur,Assistant Professor-III,C305,GPK,gaganpreet.kaur@thapar.edu,Optical Communication
+39,Dr. Geetika Dua,Assistant Professor-III,BC206,GDS,geetika@thapar.edu,"Non-destructive, Non-invasive testing using InfraRed Imaging, Bio medical Imaging"
+41,Dr. Debabrata Ghosh,Assistant Professor-III,B219,DG,debabrata.ghosh@thapar.edu,"Object Recognition, Computer Vision, Biomedical Image Processing"
+42,Dr. Dinesh,Assistant Professor-III,C206,DN,dinesh.bhardwaj@thapar.edu,"Signal Processing, Image & Video Processing, Multimedia Forensics"
+40,Dr. Amit Munjal,Assistant Professor-II,FC105 (TAN Building),AMJ,amit.munjal@thapar.edu,"MANETs, WSN, Complex Networks"
+43,Dr. Gitanjali Chandwani Manocha,Assistant Professor-II ,B220,GTJ,gc.manocha@thapar.edu,Communication & Networking
+44,Dr. Rajneesh Sharma,Assistant Professor-II,C338,RJS,rajneesh.sharma@thapar.edu,"Analytical modeling of Nanoscale transistors, Low leakage device design,"
+45,Dr. Shashikant,Assistant Professor-II,C206,SSK,shashikant@thapar.edu,Wireless Optical Communication
+46,Dr. Arnab Pattanayak,Assistant Professor-II,L629,ARP,arnab.pattanayak@thapar.edu,"Electromagnetics, Radio-Frequency (RF) and Tera-Hertz (THz) Metasurface, Antenna"
+47,Dr. Rizwan Ansari,Assistant Professor-II,L628,RA,rizwan.ansari@thapar.edu,"Signal and Image Processing, Geoinformatics"
+48,Dr. Poonam Verma,Assistant Professor-I,B220,PV,poonam.verma@thapar.edu,Wireless Network/Vehicular Adhoc Networks
+49,Dr. Navneet Sharma,Assistant Professor-I,BC208,NS,navneet.sharma@thapar.edu,"EMFT, Signals and Systems and Quantum Computation"
+50,Dr. Pravindra Kumar,Assistant Professor-I,BC208,PK,pravindra.kumar@thapar.edu,"Optical Communication, OFDM based Optical Core and Access Networks"
+51,Dr. Debayani Ghosh,Assistant Professor-I,L637,DVG,debayani.ghosh@thapar.edu,"Communication Networks, Networked Control Systems, Cyber-security"
+52,Dr. Robin Singla,Assistant Professor-I,C337,RS,robin.singla@thapar.edu,"VLSI Technology, 2-D nanomaterials, Graphene"
+53,Dr. Sandeep Mandia,Assistant Professor-I,L633,SMD,sandeep.mandia@thapar.edu,"Deep Learning, Computer Vision, and Artificial Intelligence for Medical Diagnosis"
+54,Dr. Saurabh Sharma,Assistant Professor-I,C337,SUR,saurabh.sharma@thapar.edu,"Information Retrieval, Natural Language Processing"
+55,Dr. Durgesh Singh,Assistant Professor-I,C635,DGS,durgesh.singh@thapar.edu,"Wireless networks, Mobile computing, Edge computing, Federated Machine Learning"
+56,Dr. Chandramohan Dhasarathan,Assistant Professor-I,L631 ,CDM,chandramohan@thapar.edu,"Pervasive and Ubiquitous Computing, Blockchain Technology, Cyber Security"
+57,Dr. Lalit Kumar Baghel,Assistant Professor-I,L630,LKB,lalit.baghel@thapar.edu,"Wireless Communication, Embedded Systems, Internet of Things (IoT)"
+58,Dr. Akash Agarwal,Assistant Professor-I,L631,AKA,akash.agarwal@thapar.edu,"Wireless Communication and Signal Processing, AI/ML"
+59,Dr. Sushil Kumar Jain,Assistant Professor-I,C635,SUJ,sushil.jain@thapar.edu,"Microelectronics & VLSI Design, Wearable Sensors"
+60,Dr. Mohd Faseehuddin,Assistant Professor (Term),L627,MFD,faseehuddin@thapar.edu,Analog Integrated Circuits Design
+61,Dr. Deepak Kumar Rakesh ,Assistant Professor (Term),L630,DKR,deepak.rakesh@thapar.edu,"MACHINE LEARNING, NATURAL LANGUAGE PROCESSCING, IMAGE PROCESSIONG"
+62,Mr. Sukhwinder Kumar,Assistant Professor (Contractual-I),L633,SUK,sukhwinder.kumar@thapar.edu,Embedded System and Wireless Communication
+63,Dr. Ashu Sharma,Assistant Professor (Contractual-II),L637,AUS,ashu.sharma@thapar.edu,"Psychovisual analysis of images, Satellite Image Processing, Eye tracking"
+64,Dr. Ankit Soni,Assistant Professor (Contractual-II),L602,ANS,ankit.soni@thapar.edu,"Robotics, Multi Robot Coordination and Communication"
+65,Dr. Abhishek Vyas,Assistant Professor (Contractual-II),L601,AVY,abhishek.vyas@thapar.edu,"Machine learning, Deep Learning, Image Processing, Medical Image Analysis,"
