@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  background-color: #f5f1e8;
+}
+
+body {
+  @apply bg-parchment text-ink font-sans antialiased;
+  background-image: radial-gradient(circle, rgba(28, 35, 51, 0.12) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+::selection {
+  background-color: #1c2333;
+  color: #f5f1e8;
+}
+
+/* @layer components places these before Tailwind's utilities in the final
+   stylesheet, so a utility class (e.g. text-parchment) applied alongside one
+   of these always wins over the default baked in here via @apply. */
+@layer components {
+  .card-plate {
+    @apply border-2 border-ink bg-[#fbf8f0] shadow-[6px_6px_0_0_rgba(28,35,51,0.9)];
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-ink bg-ink px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider text-parchment transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border-2 border-ink bg-transparent px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-parchment;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 border-2 border-ink px-3 py-1.5 text-sm font-semibold transition-colors cursor-pointer select-none;
+  }
+
+  .chip-selected {
+    @apply bg-ink text-parchment;
+  }
+
+  .chip-idle {
+    @apply bg-transparent text-ink hover:bg-mossLight;
+  }
+
+  .label-tag {
+    @apply font-mono text-[11px] font-bold uppercase tracking-widest text-ink/70;
+  }
+
+  .field-input {
+    @apply w-full border-2 border-ink bg-white px-4 py-3 text-ink placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-moss;
+  }
+
+  .sticky-note {
+    @apply border-2 border-ink bg-sticky px-4 py-3 font-hand text-lg leading-snug shadow-[4px_4px_0_0_rgba(28,35,51,0.9)];
+  }
+}
