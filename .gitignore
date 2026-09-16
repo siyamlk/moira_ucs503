@@ -1,4 +1,4 @@
-# Local portable PostgreSQL runtime (dev convenience only, not part of the project)
+
 pgsql_runtime/
 pgdata/
 
