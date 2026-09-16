@@ -20,9 +20,11 @@ GRADE_POINTS: dict[str, float] = {
     "F": 0.0,
 }
 
-# Assumed grade point earned when a backlog is eventually cleared.
-# A conservative "C" (Average) pass rather than an optimistic A, since we
-# cannot know the student's actual future performance.
+# Assumed grade point earned when an E-grade backlog is cleared via TIET's
+# auxiliary exam, which caps the grade at C (6.0). F/X backlogs are cleared
+# by full course retake with no such cap, so 6.0 is a floor — not a precise
+# estimate — for those. See explanation text in prioritize() for the
+# per-grade framing shown to the student.
 ASSUMED_CLEAR_GRADE_POINT = 6.0
 
 
@@ -104,10 +106,26 @@ def prioritize(
             )
         else:
             direction = "gain" if item["cgpa_impact"] >= 0 else "dip"
+            rank_phrase = "largest" if rank == 1 else f"#{rank} largest"
+
+            if backlog.current_grade == "E":
+                assumption = (
+                    "assuming a C (6.0) grade — the maximum allowed via TIET's "
+                    "auxiliary exam for E-grade backlogs"
+                )
+            elif backlog.current_grade in ("F", "X"):
+                assumption = (
+                    f"assuming a C (6.0) grade as a floor — {backlog.current_grade}-grade "
+                    "backlogs are cleared by retaking the full course with no grade cap, "
+                    "so your actual result could be higher"
+                )
+            else:
+                assumption = "assuming a C (6.0) grade"
+
             explanation = (
                 f"Clearing {backlog.course_code} ({backlog.credits:.0f} credits) is estimated to move "
-                f"your CGPA by {item['cgpa_impact']:+.3f}, the "
-                f"{'largest' if rank == 1 else f'#{rank} largest'} {direction} among your pending backlogs."
+                f"your CGPA by {item['cgpa_impact']:+.3f} ({assumption}), the "
+                f"{rank_phrase} {direction} among your pending backlogs."
             )
         results.append(
             {

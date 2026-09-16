@@ -2,8 +2,9 @@
 
 **This is a prototype estimate, not an official university CGPA calculation.**
 The grade scale below is Thapar's official 10-point grading ordinance; the
-CGPA-impact math itself (`ASSUMED_CLEAR_GRADE_POINT` and the weighted-average
-formula) is still a deliberate simplification — see §2.
+assumed 6.0 (C) grade point is grounded in TIET's auxiliary-exam grade cap
+for E-grade backlogs (see §2), though the overall CGPA-impact math is still
+a deliberate simplification.
 
 ## 1. Grade scale
 
@@ -34,25 +35,37 @@ A backlog's credits are **not yet counted** in the student's `credits_earned`
 or `cgpa` (it was failed/not cleared). Clearing it adds new grade points and
 new credits to the running total:
 
-```
-current_points = current_cgpa × credits_earned
-assumed_clear_grade_point = 6.0   # a conservative C ("Average") pass, not an optimistic A
-new_points = current_points + (backlog_credits × assumed_clear_grade_point)
-new_credits = credits_earned + backlog_credits
-estimated_new_cgpa = new_points / new_credits
-cgpa_impact = estimated_new_cgpa − current_cgpa
-```
+    current_points = current_cgpa × credits_earned
+    assumed_clear_grade_point = 6.0   # see rationale below
+    new_points = current_points + (backlog_credits × assumed_clear_grade_point)
+    new_credits = credits_earned + backlog_credits
+    estimated_new_cgpa = new_points / new_credits
+    cgpa_impact = estimated_new_cgpa − current_cgpa
 
-We assume a mid-range pass (C = 6.0 grade points) rather than an optimistic
-A, since MOIRA cannot predict the student's actual future performance. The
-`current_grade` stored on a backlog (its prior E, F, or X outcome) is
-informational only — a backlog's credits are not yet counted toward the
-degree regardless of the last attempted grade, so it does not enter the
-impact formula. **This also means a backlog can show a *negative* CGPA
-impact**: if a student's current CGPA is already above 6.0, blending in an
-assumed 6.0-point pass pulls the weighted average down, same as one average
-grade dragging down an otherwise-high GPA in real life — see §3, magnitude
-(not sign) is what drives the ranking.
+We assume a C (6.0 grade points) rather than an optimistic A. This isn't an
+arbitrary conservative choice — it's grounded in TIET's regulations: a
+backlog with an **E grade** can be cleared via the auxiliary exam, where
+"candidates appearing with 'E' grade can be awarded 'C' grade as the maximum
+grade." A C is therefore the regulatory ceiling for the most common backlog-
+clearing route. For **F or X grades**, the student must instead re-register
+and retake the full course, with no such grade cap — so 6.0 is a
+conservative *floor* for those, not a precise ceiling, since the student
+could realistically score higher.
+
+The `current_grade` stored on a backlog (its prior E, F, or X outcome) does
+**not** change the impact formula itself — `assumed_clear_grade_point` stays
+6.0 for every backlog regardless of `current_grade`, since a backlog's
+credits are not yet counted toward the degree either way. What `current_grade`
+*does* change is the explanation text shown to the student: an E-grade
+backlog's explanation cites the auxiliary-exam C-grade cap as the basis for
+the assumption, while an F/X backlog's explanation notes the assumption is a
+floor and the actual result could be higher.
+
+**This also means a backlog can show a *negative* CGPA impact**: if a
+student's current CGPA is already above 6.0, blending in an assumed
+6.0-point pass pulls the weighted average down, same as one average grade
+dragging down an otherwise-high GPA in real life — see §3, magnitude (not
+sign) is what drives the ranking.
 
 ### 2.1 The `credits_earned = 0` edge case
 
