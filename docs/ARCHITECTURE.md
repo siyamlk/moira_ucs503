@@ -49,12 +49,28 @@ by PostgreSQL. No Docker/Kubernetes/microservices yet (deliberately deferred
 
 1. `POST /api/auth/signup` or `/api/auth/login` → backend verifies/hashes
    password with bcrypt, issues a JWT (`sub` = user id, expires per
-   `ACCESS_TOKEN_EXPIRE_MINUTES`).
+   `ACCESS_TOKEN_EXPIRE_MINUTES`). The token never carries a role claim.
 2. Frontend stores the token and attaches `Authorization: Bearer <token>` to
    every subsequent request via an Axios interceptor.
 3. Protected routes use the `get_current_user` FastAPI dependency, which
    decodes the JWT and loads the `User` row; invalid/expired tokens return
-   `401`.
+   `401`. Admin-only routes additionally depend on `get_current_admin_user`,
+   which checks `User.role == "admin"` freshly off that same row on every
+   request — see `docs/ADMIN.md`.
+
+## Admin subsystem
+
+A second actor (`role = "admin"` on `User`, default `"student"`) with its own
+route package (`routes/admin/`), its own schemas (`schemas/admin.py`), and a
+full CRUD surface over the academic data the advisory engines consume
+(`Elective`, `Faculty`, `FacultySchedule`) plus a generic `AcademicConfig`
+key/value store and an `AuditLog` of every admin mutation. The frontend
+mirrors this with a parallel `/admin/*` route tree (`AdminRoute` +
+`AdminLayout`, alongside the existing `ProtectedRoute` + `AppLayout`) so
+student and admin surfaces stay structurally independent while sharing the
+same design system, auth context, and Axios client. Full details, including
+the authorization model, data model, and the "admin manages data → engine
+consumes it" flow for `recommendation_weights`: `docs/ADMIN.md`.
 
 ## Request lifecycle example (Elective Advisor)
 

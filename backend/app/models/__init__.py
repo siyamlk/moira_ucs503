@@ -1,3 +1,5 @@
+from app.models.academic_config import AcademicConfig
+from app.models.audit_log import AuditLog
 from app.models.backlog import Backlog
 from app.models.elective import Elective
 from app.models.faculty import Faculty
@@ -12,4 +14,6 @@ __all__ = [
     "Faculty",
     "FacultySchedule",
     "Backlog",
+    "AuditLog",
+    "AcademicConfig",
 ]

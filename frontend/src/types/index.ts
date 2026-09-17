@@ -3,6 +3,7 @@ export interface User {
   full_name: string;
   student_id: string;
   email: string;
+  role: "student" | "admin";
 }
 
 export interface AuthResponse {

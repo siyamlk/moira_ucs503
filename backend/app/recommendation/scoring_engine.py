@@ -73,12 +73,12 @@ def _ratio(numerator: int, denominator: int) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def _earn(component_key: str, ratio: float) -> int:
+def _earn(component_key: str, ratio: float, weights: dict[str, int]) -> int:
     ratio = max(0.0, min(1.0, ratio))
     # Round-half-up rather than Python's banker's-rounding round(), so
     # e.g. 2.5 -> 3 consistently instead of 2 — the intuitive behavior a
     # student reading "X/Y" expects.
-    return int(SCORE_WEIGHTS[component_key] * ratio + 0.5)
+    return int(weights[component_key] * ratio + 0.5)
 
 
 def score_elective(
@@ -97,7 +97,13 @@ def score_elective(
     elective_prerequisites: str,
     elective_category: str,
     custom_interest_terms: list[str] | None = None,
+    weights: dict[str, int] | None = None,
 ) -> ScoredMatch:
+    # Defaults to the hardcoded SCORE_WEIGHTS so every existing caller (and
+    # test) that doesn't pass weights keeps behaving identically. Admin-
+    # configured overrides flow in only where the caller explicitly loads
+    # them (see app.services.academic_config_service.get_recommendation_weights).
+    weights = weights or SCORE_WEIGHTS
     custom_interest_terms = custom_interest_terms or []
     interest_set = set(interest_tags)
     career_set = set(career_tags)
@@ -118,7 +124,7 @@ def score_elective(
     matched_custom_interests = [t for t in normalized_custom_interests if text_contains(combined_text, t)]
     interest_denominator = len(interest_set) + len(normalized_custom_interests)
     interest_numerator = len(matched_interests) + len(matched_custom_interests)
-    interest_earned = _earn("interest", _ratio(interest_numerator, interest_denominator))
+    interest_earned = _earn("interest", _ratio(interest_numerator, interest_denominator), weights)
 
     # --- Career alignment: proportional, not all-or-nothing. A course that
     # matches only one of the student's several career-goal tags shouldn't
@@ -127,7 +133,7 @@ def score_elective(
     # mentions computer vision) earn full career credit, on par with a
     # course genuinely centered on that career path. ---
     matched_career = sorted(career_set & set(elective_career_tags))
-    career_earned = _earn("career", _ratio(len(matched_career), len(career_set)))
+    career_earned = _earn("career", _ratio(len(matched_career), len(career_set)), weights)
 
     # --- Syllabus alignment: primarily real evidence from the actual EFB
     # unit headers, with a flat (not ratio-based) floor when a course is
@@ -169,14 +175,14 @@ def score_elective(
     else:
         matched_syllabus_lines = []
         syllabus_ratio = baseline_ratio
-    syllabus_earned = _earn("syllabus", syllabus_ratio)
+    syllabus_earned = _earn("syllabus", syllabus_ratio, weights)
 
     # --- Skill alignment: literal skill keywords the student typed vs the
     # actual course title/description/syllabus text (not the canonical tag
     # vocabulary — skills are specific technologies, e.g. "Docker") ---
     normalized_skills = [s.strip().lower() for s in skills if s.strip()]
     matched_skills = [s for s in normalized_skills if text_contains(combined_text, s)]
-    skill_earned = _earn("skill", _ratio(len(matched_skills), len(normalized_skills)))
+    skill_earned = _earn("skill", _ratio(len(matched_skills), len(normalized_skills)), weights)
 
     # --- Academic fit: does this elective sit in the slot the student is
     # actually choosing from this term, plus any overlap between completed
@@ -200,7 +206,7 @@ def score_elective(
         if any(c in p.lower() or p.lower() in c for p in prereq_names) or c in elective_description.lower()
     )
     coursework_ratio = _ratio(min(coursework_hits, 3), 3) if normalized_completed else 0.0
-    academic_earned = _earn("academic", (slot_ratio + coursework_ratio) / 2)
+    academic_earned = _earn("academic", (slot_ratio + coursework_ratio) / 2, weights)
 
     # --- Prerequisite compatibility: has the student completed what this
     # elective's own "Recommended Prerequisites" line (sourced from the EFB
@@ -216,16 +222,16 @@ def score_elective(
             prerequisite_checks.append(PrerequisiteCheck(name=name, satisfied=ok))
             satisfied += int(ok)
         prereq_ratio = _ratio(satisfied, len(prereq_names))
-    prerequisite_earned = _earn("prerequisite", prereq_ratio)
+    prerequisite_earned = _earn("prerequisite", prereq_ratio, weights)
 
     components = [
-        ScoreComponent("interest", COMPONENT_LABELS["interest"], interest_earned, SCORE_WEIGHTS["interest"]),
-        ScoreComponent("career", COMPONENT_LABELS["career"], career_earned, SCORE_WEIGHTS["career"]),
-        ScoreComponent("syllabus", COMPONENT_LABELS["syllabus"], syllabus_earned, SCORE_WEIGHTS["syllabus"]),
-        ScoreComponent("skill", COMPONENT_LABELS["skill"], skill_earned, SCORE_WEIGHTS["skill"]),
-        ScoreComponent("academic", COMPONENT_LABELS["academic"], academic_earned, SCORE_WEIGHTS["academic"]),
+        ScoreComponent("interest", COMPONENT_LABELS["interest"], interest_earned, weights["interest"]),
+        ScoreComponent("career", COMPONENT_LABELS["career"], career_earned, weights["career"]),
+        ScoreComponent("syllabus", COMPONENT_LABELS["syllabus"], syllabus_earned, weights["syllabus"]),
+        ScoreComponent("skill", COMPONENT_LABELS["skill"], skill_earned, weights["skill"]),
+        ScoreComponent("academic", COMPONENT_LABELS["academic"], academic_earned, weights["academic"]),
         ScoreComponent(
-            "prerequisite", COMPONENT_LABELS["prerequisite"], prerequisite_earned, SCORE_WEIGHTS["prerequisite"]
+            "prerequisite", COMPONENT_LABELS["prerequisite"], prerequisite_earned, weights["prerequisite"]
         ),
     ]
     match_percentage = min(100, sum(c.earned for c in components))

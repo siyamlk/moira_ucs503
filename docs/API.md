@@ -107,6 +107,49 @@ backlogs by estimated CGPA impact. → `200`:
 ```
 Formula: `docs/BACKLOG_LOGIC.md`.
 
+## Admin
+
+All endpoints below require `Authorization: Bearer <token>` for a user whose
+`role` is `"admin"` (checked fresh from the DB on every request via
+`get_current_admin_user`, not from the token) — students get `403`,
+unauthenticated callers get `401`. See `docs/ADMIN.md` for the full
+authorization model, data model, and workflows.
+
+### `GET /api/admin/dashboard`
+→ `200` `{ total_electives, total_faculty, total_baskets, total_categories, recent_activity: AuditLogOut[] }`.
+
+### Electives — `GET/POST /api/admin/electives`, `PUT/DELETE /api/admin/electives/{id}`
+`GET` accepts optional `search`, `department`, `category`, `basket` query
+params. `POST`/`PUT` bodies are `AdminElectiveCreate`/`AdminElectiveUpdate`
+(all `Elective` fields, including `interest_tags`/`career_tags`/`faculty_id`
+which the public `/api/electives` endpoints don't expose). `400` on a
+duplicate `(code, department)` or an unknown `faculty_id`. `DELETE` → `204`,
+or `404`.
+
+### Faculty — `GET/POST /api/admin/faculty`, `PUT/DELETE /api/admin/faculty/{id}`
+`GET` accepts optional `search`, `department`. `400` on a duplicate
+`ref_code`. `DELETE` → `409` if any electives are still assigned to this
+faculty member (reassign or clear `faculty_id` first); their own
+`faculty_schedules` rows cascade-delete automatically.
+
+### Schedules — `GET/POST /api/admin/schedules`, `PUT/DELETE /api/admin/schedules/{id}`
+`GET` accepts optional `faculty_id`. Body includes `semester` (free text,
+e.g. `"Odd 2026-27"`, empty = standing slot). `400` on an unknown
+`faculty_id`.
+
+### Config — `GET /api/admin/config`, `GET/PUT /api/admin/config/{key}`
+Generic admin-managed key/value store. `PUT` body: `{ value, description? }`.
+The well-known key `recommendation_weights` gets extra validation: `value`
+must have exactly the `interest`/`career`/`syllabus`/`skill`/`academic`/
+`prerequisite` keys, integers, summing to `100`, else `400`. Any other key is
+stored as-is (extensible for future rules). See `docs/ADMIN.md` for how
+`recommendation_weights` flows into `POST /api/recommendations`.
+
+### `GET /api/admin/audit-log`
+Optional `limit` (default 50, max 200). → `200` list of `AuditLogOut`
+(`admin_id`, `action`, `entity_type`, `entity_id`, `details`, `created_at`),
+most recent first. Written automatically by every admin mutation above.
+
 ## Error format
 
 FastAPI default: `{ "detail": "message" }` with the relevant 4xx/5xx status

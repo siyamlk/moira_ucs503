@@ -25,3 +25,12 @@ def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+def get_current_admin_user(current_user: User = Depends(get_current_user)) -> User:
+    """Role is re-checked fresh off the User row on every request (never off
+    the JWT), same philosophy as get_current_user re-fetching the user —
+    a demoted admin loses access on their very next call, not at token expiry."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return current_user

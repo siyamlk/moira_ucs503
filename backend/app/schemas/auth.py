@@ -18,6 +18,7 @@ class UserOut(BaseModel):
     full_name: str
     student_id: str
     email: EmailStr
+    role: str
 
     model_config = {"from_attributes": True}
 

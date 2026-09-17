@@ -5,6 +5,15 @@ startup via `Base.metadata.create_all()` — no migration tool (Alembic) is
 used yet to keep the project simple; add Alembic if the schema needs to
 evolve against a populated production database later.
 
+`create_all()` is additive-only (it never alters an existing table), so the
+two columns added for the Admin feature (`users.role`,
+`faculty_schedules.semester`) are backfilled onto an already-populated
+Postgres database by a small idempotent guard in `main.py`
+(`_upgrade_existing_schema`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`,
+gated to the `postgresql` dialect) that runs once at startup before
+`create_all()`. No existing data is touched or lost; new columns get safe
+defaults (`role` → `'student'`, `semester` → `''`).
+
 ## Entities
 
 ### `users`
@@ -15,6 +24,7 @@ evolve against a populated production database later.
 | student_id | string | unique |
 | email | string | unique |
 | hashed_password | string | bcrypt hash, never plaintext |
+| role | string | `"student"` (default) or `"admin"`; never self-settable via signup — see `docs/ADMIN.md` |
 | created_at | datetime | |
 
 ### `student_profiles` (1:1 with `users`)
@@ -51,6 +61,7 @@ evolve against a populated production database later.
 | start_time, end_time | string | `HH:MM` |
 | room | string | |
 | note | string | e.g. `Office Hours` |
+| semester | string | e.g. `"Odd 2026-27"`; empty = standing/every-semester slot. Admin-entered only, never inferred — see `docs/ADMIN.md` |
 
 ### `electives`
 | Column | Type | Notes |
@@ -78,11 +89,38 @@ evolve against a populated production database later.
 | status | string | `pending` \| `cleared` |
 | created_at | datetime | |
 
+### `audit_log`
+| Column | Type | Notes |
+|---|---|---|
+| id | PK | |
+| admin_id | FK → users.id, nullable | who performed the action |
+| action | string | `"create"` \| `"update"` \| `"delete"` |
+| entity_type | string | e.g. `"elective"`, `"faculty"`, `"faculty_schedule"`, `"academic_config"` |
+| entity_id | int, nullable | |
+| details | JSON, nullable | small free-form context, e.g. `{"code": "UCS900"}` or `{"fields": ["title"]}` |
+| created_at | datetime | indexed, written by every admin mutation — see `docs/ADMIN.md` |
+
+### `academic_config`
+| Column | Type | Notes |
+|---|---|---|
+| id | PK | |
+| key | string | unique, e.g. `"recommendation_weights"`, `"elective_categories"` |
+| value | JSON | shape depends on `key` |
+| description | string | |
+| updated_at | datetime | |
+| updated_by | FK → users.id, nullable | |
+
+Generic key/value store rather than one column per setting, so new
+admin-configurable rules can be added without a schema change. Only
+`recommendation_weights` currently feeds into engine behavior (see
+`docs/ADMIN.md`); other keys are stored for the admin UI to read/display.
+
 ## Relationships
 
 ```
 User 1───1 StudentProfile
 User 1───N Backlog
+User 1───N AuditLog        (as the acting admin)
 Faculty 1───N FacultySchedule
 Faculty 1───N Elective
 ```
@@ -101,6 +139,9 @@ Faculty 1───N Elective
 It also seeds one **demo student account**
 (`alex.chen@thapar.edu` / `Demo@1234`) with a sample profile and 3 pending
 backlogs, clearly a demo account (not sourced from any real record), so the
-app can be tried immediately without signing up. Mechanical, Civil, and ENC
-branch data is not yet included — add a CSV + a `FACULTY_SOURCES`/
-`ELECTIVE_SOURCES` entry the same way to extend coverage.
+app can be tried immediately without signing up, plus one **dev admin
+account** (`admin@moira.local` / `AdminPass123!`, `role="admin"` — rotate or
+remove before any real deployment, see `docs/ADMIN.md`) and the initial
+`academic_config` rows (`recommendation_weights`, `elective_categories`).
+Mechanical, Civil, and ENC branch data is not yet included — add a CSV + a
+`FACULTY_SOURCES`/`ELECTIVE_SOURCES` entry the same way to extend coverage.

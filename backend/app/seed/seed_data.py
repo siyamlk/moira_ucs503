@@ -41,16 +41,40 @@ from pathlib import Path
 from app.core.security import hash_password
 from app.database.base import Base
 from app.database.connection import SessionLocal, engine
+from app.models.academic_config import AcademicConfig
 from app.models.backlog import Backlog
 from app.models.elective import Elective
 from app.models.faculty import Faculty
 from app.models.student_profile import StudentProfile
 from app.models.user import User
+from app.recommendation.scoring_engine import SCORE_WEIGHTS
+from app.services.academic_config_service import RECOMMENDATION_WEIGHTS_KEY
 from app.services.recommendation_service import (
     INTEREST_KEYWORDS,
     derive_elective_career_tags,
     extract_tags,
 )
+
+# Dev-only default admin account. Rotate or remove this before any real
+# deployment — see docs/ADMIN.md. There is no self-service way to become an
+# admin; this seed (or a direct DB update) is the only path.
+# NB: must be a real (non-reserved) TLD — email-validator rejects .local/
+# .test/.example etc. even though the ORM insert below bypasses that check,
+# and the seeded account still needs to log in through the validated
+# /api/auth/login endpoint like any other user.
+DEFAULT_ADMIN_EMAIL = "admin@moira.app"
+DEFAULT_ADMIN_PASSWORD = "AdminPass123!"
+
+# Matches Elective.category's documented value set (see models/elective.py)
+# plus the "Professional Elective" fallback used by seed_electives() below.
+ELECTIVE_CATEGORIES = [
+    "Elective I",
+    "Elective II",
+    "Elective III",
+    "Elective IV",
+    "Generic Elective",
+    "Professional Elective",
+]
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -304,6 +328,46 @@ def seed_demo_user(db) -> None:
     db.commit()
 
 
+def seed_admin(db) -> None:
+    if db.query(User).filter(User.email == DEFAULT_ADMIN_EMAIL).first() is not None:
+        return
+
+    admin_user = User(
+        full_name="MOIRA Admin",
+        student_id="ADMIN-001",
+        email=DEFAULT_ADMIN_EMAIL,
+        hashed_password=hash_password(DEFAULT_ADMIN_PASSWORD),
+        role="admin",
+    )
+    db.add(admin_user)
+    db.flush()
+
+    # Every User needs a profile (see auth.signup) even though an admin
+    # never uses the student-facing advisory features themselves.
+    db.add(StudentProfile(user_id=admin_user.id))
+    db.commit()
+
+
+def seed_academic_config(db) -> None:
+    if db.query(AcademicConfig).count() > 0:
+        return
+    db.add(
+        AcademicConfig(
+            key=RECOMMENDATION_WEIGHTS_KEY,
+            value=dict(SCORE_WEIGHTS),
+            description="Component weights (must sum to 100) used by the elective recommendation engine.",
+        )
+    )
+    db.add(
+        AcademicConfig(
+            key="elective_categories",
+            value=list(ELECTIVE_CATEGORIES),
+            description="Valid Elective.category values offered in the admin elective form.",
+        )
+    )
+    db.commit()
+
+
 def seed() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -311,6 +375,8 @@ def seed() -> None:
         seed_faculty(db)
         seed_electives(db)
         seed_demo_user(db)
+        seed_admin(db)
+        seed_academic_config(db)
         print("Seed complete.")
     finally:
         db.close()

@@ -18,8 +18,9 @@ from app.models.user import User
 from app.recommendation.basket_service import BasketRecommendation, build_basket_recommendations
 from app.recommendation.explanation_service import build_recommendation_texts
 from app.recommendation.profile_analyzer import analyze_profile, normalize_elective_slot
-from app.recommendation.scoring_engine import SCORE_WEIGHTS, score_elective
+from app.recommendation.scoring_engine import score_elective
 from app.schemas.elective import ElectiveOut
+from app.services.academic_config_service import get_recommendation_weights
 from app.schemas.recommendation import (
     AllEligibleItem,
     BasketRecommendationOut,
@@ -103,7 +104,13 @@ def _persist_profile_updates(
     db.commit()
 
 
-def _build_item(elective: Elective, analyzed, elective_slot: str | None, career_goals_raw: list[str]) -> RecommendationItem:
+def _build_item(
+    elective: Elective,
+    analyzed,
+    elective_slot: str | None,
+    career_goals_raw: list[str],
+    weights: dict[str, int],
+) -> RecommendationItem:
     scored = score_elective(
         interest_tags=analyzed.interest_tags,
         custom_interest_terms=analyzed.custom_interest_terms,
@@ -119,6 +126,7 @@ def _build_item(elective: Elective, analyzed, elective_slot: str | None, career_
         elective_syllabus_outline=elective.syllabus_outline,
         elective_prerequisites=elective.prerequisites,
         elective_category=elective.category,
+        weights=weights,
     )
     texts = build_recommendation_texts(
         course_title=elective.title,
@@ -166,6 +174,7 @@ def generate_recommendations(
     db: Session, user: User, request: RecommendationRequest, student_profile_provided: bool = True
 ) -> RecommendationResponse:
     profile = user.profile
+    weights = get_recommendation_weights(db)
     analyzed = analyze_profile(request.student_profile, profile, student_profile_provided)
     elective_slot = normalize_elective_slot(request.elective_slot)
     if student_profile_provided:
@@ -224,7 +233,8 @@ def generate_recommendations(
     # about.
     basket_pool_query = base_query.options(joinedload(Elective.faculty)).filter(Elective.basket != "")
     basket_items = [
-        _build_item(e, analyzed, None, career_goals_raw) for e in _dedupe_by_code(basket_pool_query.all())
+        _build_item(e, analyzed, None, career_goals_raw, weights)
+        for e in _dedupe_by_code(basket_pool_query.all())
     ]
     all_baskets = build_basket_recommendations(basket_items)
 
@@ -237,7 +247,7 @@ def generate_recommendations(
         primary_basket = all_baskets[0] if all_baskets else None
         alternative_baskets = all_baskets[1:4]
 
-    items = [_build_item(e, analyzed, elective_slot, career_goals_raw) for e in electives]
+    items = [_build_item(e, analyzed, elective_slot, career_goals_raw, weights) for e in electives]
     # Primary sort: match_percentage. Tie-break: total pieces of genuine
     # matched evidence (interests + career tags + skills + syllabus lines)
     # — without this, courses tied on the numeric score fall back to
@@ -293,6 +303,6 @@ def generate_recommendations(
         primary_recommendation=primary,
         alternatives=alternatives,
         all_eligible_courses=all_eligible,
-        weights=SCORE_WEIGHTS,
+        weights=weights,
         branch_warning=branch_warning,
     )

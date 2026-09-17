@@ -80,6 +80,9 @@ export function LoginPage() {
         <p className="text-center text-xs text-ink/40">
           Demo login: alex.chen@thapar.edu / Demo@1234
         </p>
+        <p className="text-center text-xs text-ink/40">
+          Admin login: admin@moira.app / AdminPass123!
+        </p>
 
         <div className="mt-auto flex items-center justify-between border-t-2 border-ink pt-4 text-sm">
           <span className="text-ink/60">Don&apos;t have an account?</span>

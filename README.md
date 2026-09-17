@@ -83,8 +83,34 @@ Faculty schedule information is part of the intended academic-data model and can
 - [x] Bcrypt password hashing
 - [x] Protected API resources
 - [x] Persistent authenticated sessions
+- [x] Role-based authorization (student / admin)
+
+### Admin
+
+- [x] Role-based admin authentication, enforced server-side
+- [x] Academic dashboard (courses, faculty, baskets, recent activity)
+- [x] Course & elective management (create/edit/delete, search/filter)
+- [x] Faculty management (create/edit/delete, search/filter)
+- [x] Faculty schedule management (office hours, room, semester)
+- [x] Academic configuration (recommendation weights, elective categories)
+- [x] Audit logging of admin actions
+
+See `docs/ADMIN.md` for the full architecture and authorization model.
 
 ---
+
+
+# Use Case Diagram
+
+The diagram below summarizes the primary actors and use cases across MOIRA's student, faculty, and admin-facing workflows.
+
+![MOIRA Use Case Diagram](docs/use_case_diagram.png)
+
+- **Student (Primary Actor):** registers/logs in, manages their profile, requests elective recommendations, and requests backlog priority ranking.
+- **Faculty (External Advisor):** consulted for meeting hours, location, and schedule details as part of recommendation and backlog workflows.
+- **Admin (Secondary Actor):** manages course/elective metadata and faculty schedules, and views usage/feedback analytics — part of the planned admin extensions described under *Future System Evolution*.
+
+--- 
 
 # System Design
 

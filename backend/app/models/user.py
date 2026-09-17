@@ -14,6 +14,9 @@ class User(Base):
     student_id: Mapped[str] = mapped_column(String(40), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(180), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # "student" or "admin". Never settable via self-service signup — admin
+    # accounts are provisioned via the seed script or a direct DB update.
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="student")
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
