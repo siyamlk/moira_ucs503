@@ -72,8 +72,9 @@ The profile provides contextual input for the advisory system and is persisted t
 - [x] Faculty specializations
 - [x] Faculty contact information where available
 - [x] Recommendation-based faculty matching
+- [x] Slot booking against real, admin-entered office-hour schedules
 
-Faculty schedule information is part of the intended academic-data model and can be incorporated as the corresponding source data becomes available.
+Faculty schedule coverage itself remains partial (see *Current Limitations*) — booking only ever operates on `FacultySchedule` rows that actually exist; MOIRA does not fabricate availability to make the feature demoable. A handful of faculty currently have **seeded demo office-hour slots** (`seed_demo_schedules` in `backend/app/seed/seed_data.py`) purely so the booking flow has something real to click through locally — these are clearly-labeled placeholder slots, not real timetable data. The feature will work against the actual faculty base once real office-hour data is collected from each department (the same way `faculty_cse.csv`/`faculty_ece.csv` were sourced from real directories) and entered through the admin Schedules page. See `docs/BOOKING.md`.
 
 ### Authentication
 
@@ -92,6 +93,7 @@ Faculty schedule information is part of the intended academic-data model and can
 - [x] Course & elective management (create/edit/delete, search/filter)
 - [x] Faculty management (create/edit/delete, search/filter)
 - [x] Faculty schedule management (office hours, room, semester)
+- [x] Booking visibility (every student's slot bookings, filterable by faculty, with force-cancel)
 - [x] Academic configuration (recommendation weights, elective categories)
 - [x] Audit logging of admin actions
 
@@ -478,6 +480,9 @@ MOIRA exposes a REST-based API organized around resources and application use ca
 | `POST` | `/api/backlogs/prioritize` | Generate priority order |
 | `GET` | `/api/faculty` | Search faculty |
 | `GET` | `/api/faculty/{id}` | Retrieve faculty |
+| `GET` | `/api/bookings` | Retrieve caller's slot bookings |
+| `POST` | `/api/bookings` | Book a faculty office-hour slot |
+| `DELETE` | `/api/bookings/{id}` | Cancel a booking |
 
 Complete API reference: [`docs/API.md`](docs/API.md)
 
@@ -498,7 +503,9 @@ Complete API reference: [`docs/API.md`](docs/API.md)
 | **Password Security** | bcrypt |
 | **Database** | PostgreSQL |
 | **Testing** | pytest, TypeScript build checks |
-| **CI** | GitHub Actions |
+| **CI/CD** | GitHub Actions (tests, build, Docker image publish to GHCR) |
+| **Containerization** | Docker, Docker Compose |
+| **Caching** | Redis (optional; targeted read-path caching, see `docs/ARCHITECTURE.md`) |
 
 ---
 
@@ -509,6 +516,8 @@ moira/
 │
 ├── frontend/
 │   ├── public/                 Static assets
+│   ├── Dockerfile              Multi-stage build → nginx static serve
+│   ├── nginx.conf              SPA fallback routing
 │   └── src/
 │       ├── components/         Reusable UI components
 │       ├── pages/              Application screens
@@ -517,12 +526,13 @@ moira/
 │       └── utils/              Shared utilities
 │
 ├── backend/
+│   ├── Dockerfile
 │   ├── app/
 │   │   ├── core/               Configuration & security
 │   │   ├── database/           Database connection & base
 │   │   ├── models/             SQLAlchemy ORM entities
 │   │   ├── schemas/            Pydantic API contracts
-│   │   ├── routes/             FastAPI endpoints
+│   │   ├── routes/             FastAPI endpoints (incl. routes/admin/)
 │   │   ├── recommendation/     Recommendation domain logic
 │   │   ├── services/           Application/business services
 │   │   └── seed/               Academic data loading
@@ -530,10 +540,14 @@ moira/
 │   ├── tests/                  Backend test suite
 │   └── requirements.txt
 │
+├── docker-compose.yml          Postgres + backend + frontend, local/staging
+│
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── API.md
 │   ├── DATABASE.md
+│   ├── ADMIN.md
+│   ├── BOOKING.md
 │   ├── RECOMMENDATION_LOGIC.md
 │   └── BACKLOG_LOGIC.md
 │
@@ -556,8 +570,10 @@ MOIRA includes automated backend testing and frontend build verification.
 - [x] Recommendation ranking tests
 - [x] Backlog prioritization tests
 - [x] CGPA-impact calculation tests
+- [x] Admin subsystem tests (authorization, CRUD, config, audit logging)
+- [x] Slot booking tests (booking, double-booking conflicts, cancellation, ownership)
 
-The current test suite contains **19 backend tests**.
+The current test suite contains **76 backend tests**.
 
 ### Continuous Integration
 
@@ -572,20 +588,42 @@ GitHub Actions runs automated checks on repository changes.
 
 # Setup & Installation
 
-## Prerequisites
+## Option A: Docker Compose (recommended)
+
+Prerequisite: Docker + Docker Compose.
+
+```bash
+docker compose up --build
+```
+
+This starts PostgreSQL, the backend (`http://localhost:8000`, docs at
+`http://localhost:8000/docs`), and the frontend (`http://localhost:5173`).
+Seed the demo data once the containers are up:
+
+```bash
+docker compose exec backend python -m app.seed.seed_data
+```
+
+Prebuilt images from the latest `main` build are also published to GitHub
+Container Registry (`ghcr.io/<repo>-backend`, `ghcr.io/<repo>-frontend`) by
+CI — see `.github/workflows/ci.yml`.
+
+## Option B: Manual Setup
+
+### Prerequisites
 
 - Python 3.10+
 - Node.js 18+
 - PostgreSQL 14+
 
-## 1. Create the Database
+### 1. Create the Database
 
 ```sql
 CREATE USER moira_user WITH PASSWORD 'moira_password';
 CREATE DATABASE moira OWNER moira_user;
 ```
 
-## 2. Configure the Backend
+### 2. Configure the Backend
 
 ```bash
 cd backend
@@ -621,15 +659,16 @@ Configure:
 ```text
 DATABASE_URL
 JWT_SECRET
+REDIS_URL   # optional — caching degrades gracefully to direct DB reads if unset/unreachable
 ```
 
-## 3. Seed Academic Data
+### 3. Seed Academic Data
 
 ```bash
 python -m app.seed.seed_data
 ```
 
-## 4. Start the Backend
+### 4. Start the Backend
 
 ```bash
 uvicorn app.main:app --reload --port 8000
@@ -647,7 +686,7 @@ API documentation:
 http://localhost:8000/docs
 ```
 
-## 5. Configure the Frontend
+### 5. Configure the Frontend
 
 ```bash
 cd frontend
@@ -666,7 +705,7 @@ Set:
 VITE_API_URL=http://localhost:8000/api
 ```
 
-## 6. Start the Frontend
+### 6. Start the Frontend
 
 ```bash
 npm run dev
@@ -678,7 +717,7 @@ Frontend:
 http://localhost:5173
 ```
 
-## 7. Demo Account
+### 7. Demo Account
 
 ```text
 Email:    alex.chen@thapar.edu
@@ -700,6 +739,8 @@ The `docs/` directory contains detailed technical documentation.
 | [`DATABASE.md`](docs/DATABASE.md) | Database schema |
 | [`RECOMMENDATION_LOGIC.md`](docs/RECOMMENDATION_LOGIC.md) | Elective recommendation logic |
 | [`BACKLOG_LOGIC.md`](docs/BACKLOG_LOGIC.md) | Backlog prioritization and CGPA estimation |
+| [`ADMIN.md`](docs/ADMIN.md) | Admin subsystem: authorization model, data model, workflows |
+| [`BOOKING.md`](docs/BOOKING.md) | Slot booking against real faculty office-hour schedules |
 
 ---
 
@@ -709,17 +750,18 @@ The current architecture establishes modular boundaries that can support additio
 
 ### Access & Administration
 
-- [ ] Role-Based Access Control for Student, Faculty, and Admin
-- [ ] Admin dashboard
-- [ ] Academic course and elective management
-- [ ] Faculty data management
-- [ ] Faculty schedule management
-- [ ] Academic rule/configuration management
-- [ ] Audit logging
+- [x] Role-Based Access Control for Student and Admin
+- [x] Admin dashboard
+- [x] Academic course and elective management
+- [x] Faculty data management
+- [x] Faculty schedule management
+- [x] Slot booking against real faculty schedules
+- [x] Academic rule/configuration management
+- [x] Audit logging
 
 ### Performance & Processing
 
-- [ ] Redis caching for frequently accessed academic data
+- [x] Redis caching for the read-heavy `/api/electives` and `/api/faculty` listings
 - [ ] Caching of suitable repeated recommendation requests
 - [ ] Background workers for asynchronous processing
 - [ ] Job-based processing for heavier workloads
@@ -736,12 +778,12 @@ The current architecture establishes modular boundaries that can support additio
 
 ### Deployment & Infrastructure
 
-- [ ] Docker-based environments
+- [x] Docker-based environments (`docker-compose.yml`, per-service Dockerfiles)
+- [x] Automated image build + publish to GHCR on merge to main (CI)
 - [ ] Cloud deployment
 - [ ] Managed PostgreSQL
 - [ ] Load balancing
 - [ ] Horizontal backend scaling
-- [ ] Automated deployment pipeline
 
 ### Architectural Scaling
 
@@ -772,6 +814,7 @@ The objective is to introduce additional infrastructure when supported by actual
 - Current faculty coverage is CSE + ECE.
 - Mechanical, Civil, and ENC datasets are not currently included.
 - CSE faculty office-hours data is not currently available.
+- Slot booking currently runs against a small set of **seeded demo office-hour slots** for a handful of faculty, not real timetable data — real per-professor availability has not been collected yet. Once each department supplies real office-hour data (the same way the faculty directories themselves were sourced), an admin enters it through the Schedules page and booking works against it exactly the same way, with no code changes needed.
 - Elective information is currently limited to scheme-level information such as course code, title, and credits rather than complete syllabus and prerequisite information.
 - Faculty recommendations are based on specialization/topic matching rather than fixed instructor assignments.
 - Backlog CGPA impact uses a documented prototype calculation and should not be treated as an official university calculation.
@@ -789,6 +832,7 @@ The current implementation covers the primary student-facing academic-advisory w
 ### Implemented
 
 - [x] JWT authentication
+- [x] Role-Based Access Control (student / admin, enforced server-side)
 - [x] Student profile management
 - [x] Elective discovery
 - [x] Rule-based elective recommendation
@@ -798,23 +842,23 @@ The current implementation covers the primary student-facing academic-advisory w
 - [x] Backlog prioritization
 - [x] Faculty directory
 - [x] Faculty specialization matching
+- [x] Faculty schedule management (admin CRUD)
+- [x] Slot booking against real faculty schedules
+- [x] Admin management interface (electives, faculty, schedules, config)
+- [x] Academic rule/configuration management (recommendation weights, elective categories)
+- [x] Audit logging of admin actions
 - [x] Real academic data pipeline
 - [x] REST API
 - [x] PostgreSQL persistence
 - [x] Backend automated tests
 - [x] GitHub Actions CI
+- [x] Docker containerization + CI image publish to GHCR
+- [x] Redis caching for read-heavy listing endpoints
 
 ### Planned Extensions
 
-- [ ] Role-Based Access Control
-- [ ] Admin management interface
-- [ ] Faculty schedule workflows
-- [ ] Academic rule management
-- [ ] Redis caching
 - [ ] Background processing
-- [ ] Audit logging
 - [ ] Observability and monitoring
-- [ ] Containerized deployment
 - [ ] Cloud deployment
 - [ ] Horizontal scaling
 - [ ] Independent service deployment where justified
