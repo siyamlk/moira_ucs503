@@ -7,6 +7,40 @@ input and the same academic dataset always reproduce the same result. This
 document is the source of truth for that formula; the implementation lives
 in `backend/app/recommendation/`.
 
+## Request Flow
+
+<details open>
+<summary><strong>View diagram</strong></summary>
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI as React SPA
+    participant API as POST /api/recommendations
+    participant PA as profile_analyzer
+    participant SE as scoring_engine
+    participant BS as basket_service
+    participant DB as PostgreSQL
+
+    Student->>UI: Enter interests, career goals, skills
+    UI->>API: POST /api/recommendations (JWT)
+    API->>PA: analyze_profile(request, stored profile)
+    PA-->>API: interest_tags, career_tags, custom terms
+    API->>DB: fetch eligible electives (branch-filtered)
+    DB-->>API: Elective rows
+    loop each eligible elective
+        API->>SE: score_elective(weights, tags, evidence)
+        SE-->>API: match_percentage + 6-component breakdown
+    end
+    API->>BS: build_basket_recommendations(scored items)
+    BS-->>API: baskets ranked by aggregate match
+    API->>DB: persist profile updates
+    API-->>UI: RecommendationResponse (baskets, courses, weights)
+    UI-->>Student: Ranked baskets, score breakdown, matched evidence
+```
+
+</details>
+
 ## 1. Recommending by basket, not by course
 
 The source Elective Focus Basket (EFB) documents group every Elective I–IV

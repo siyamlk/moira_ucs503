@@ -31,6 +31,88 @@ MOIRA closes this gap by combining real academic data with dedicated advisory an
 
 ---
 
+# Use Case Diagram
+
+Primary actors and use cases across MOIRA's student, faculty, and admin-facing workflows.
+
+<details open>
+<summary><strong>View diagram</strong></summary>
+
+```mermaid
+flowchart LR
+    Student["Student<br/>(Primary Actor)"]
+    Faculty["Faculty<br/>(External Advisor)"]
+    Admin["Admin<br/>(Secondary Actor)"]
+
+    subgraph MOIRA["MOIRA — Academic Advisory System"]
+        direction TB
+
+        UC1(["Register / Sign Up"])
+        UC2(["Login"])
+        UC3(["Get Elective Recommendations"])
+        UC4(["Get Backlog Priority Ranking"])
+        UC5(["Book Faculty Office-Hour Slot"])
+        UC6(["View & Cancel My Bookings"])
+
+        UC7(["Manage Profile<br/>(Interests, Career Goals, Academic Info)"])
+        UC8(["View Recommendation<br/>Details & Rationale"])
+        UC9(["Provide Feedback /<br/>Rate Elective"])
+        UC10(["View Backlog<br/>Impact on CGPA"])
+        UC11(["Set Target CGPA"])
+        UC12(["View Faculty Schedule<br/>& Availability"])
+        UC13(["View Faculty Meeting<br/>Hours & Location"])
+
+        UC14(["Manage Course &<br/>Elective Metadata"])
+        UC15(["Manage Faculty<br/>Directory & Schedules"])
+        UC16(["View & Force-Cancel<br/>Student Bookings"])
+        UC17(["Manage Academic<br/>Configuration"])
+        UC18(["View Audit Log"])
+    end
+
+    Student --> UC1
+    Student --> UC2
+    Student --> UC3
+    Student --> UC4
+    Student --> UC5
+    Student --> UC6
+
+    UC2 -.->|"«extend»"| UC1
+    UC1 -.->|"«include»"| UC7
+    UC3 -.->|"«include»"| UC8
+    UC3 -.->|"«include»"| UC9
+    UC4 -.->|"«include»"| UC10
+    UC4 -.->|"«include»"| UC11
+    UC5 -.->|"«include»"| UC12
+    UC8 -.->|"«include»"| UC13
+
+    UC12 --> Faculty
+    UC13 --> Faculty
+
+    Admin --> UC14
+    Admin --> UC15
+    Admin --> UC16
+    Admin --> UC17
+    Admin --> UC18
+
+    classDef core fill:#d4bd8c,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
+    classDef included fill:#f3e8ce,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
+    classDef adminUC fill:#a9825a,stroke:#3d2c17,stroke-width:2px,color:#fdf8ee
+    classDef actor fill:#fbf5e8,stroke:#2b2016,stroke-width:3px,color:#2b2016
+
+    class UC1,UC2,UC3,UC4,UC5,UC6 core
+    class UC7,UC8,UC9,UC10,UC11,UC12,UC13 included
+    class UC14,UC15,UC16,UC17,UC18 adminUC
+    class Student,Faculty,Admin actor
+```
+
+</details>
+
+- **Student (Primary Actor):** registers/logs in, manages their profile, requests elective recommendations, requests backlog priority ranking, and books faculty office-hour slots.
+- **Faculty (External Advisor):** consulted for meeting hours, location, and schedule details as part of recommendation and booking workflows.
+- **Admin (Secondary Actor):** manages course/elective metadata, faculty directory and schedules, academic configuration, and audit logging — and has full visibility and override authority over student bookings.
+
+---
+
 # What MOIRA Provides
 
 ### Student Profile Management
@@ -63,6 +145,33 @@ MOIRA closes this gap by combining real academic data with dedicated advisory an
 
 Faculty schedule coverage is currently partial (see *Current Limitations*); a small set of clearly-labeled seeded demo slots exists so the feature has something real to demonstrate until each department supplies real office-hour data.
 
+<details>
+<summary><strong>View booking request flow</strong></summary>
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI as React SPA
+    participant API as POST /api/bookings
+    participant DB as PostgreSQL
+    participant Cache as Redis
+
+    Student->>UI: Click "Book Slot" on a faculty schedule row
+    UI->>API: POST /api/bookings {faculty_schedule_id} (JWT)
+    API->>DB: check for an existing "booked" row on this slot
+    alt slot already booked
+        API-->>UI: 409 Conflict
+        UI-->>Student: "This slot is already booked"
+    else slot open
+        API->>DB: insert SlotBooking (status = booked)
+        API->>Cache: invalidate faculty:list
+        API-->>UI: 201 Created
+        UI-->>Student: Slot now shows "Booked" / "Cancel Booking"
+    end
+```
+
+</details>
+
 ### Authentication & Authorization
 - [x] JWT-based signup and login
 - [x] Bcrypt password hashing
@@ -82,13 +191,52 @@ See [`docs/ADMIN.md`](docs/ADMIN.md) and [`docs/BOOKING.md`](docs/BOOKING.md) fo
 
 # System Architecture
 
-MOIRA is a two-tier web application — a React SPA communicating with a FastAPI JSON API backed by PostgreSQL — containerized with Docker and accelerated by an optional Redis cache:
+MOIRA is a two-tier web application — a React SPA communicating with a FastAPI JSON API backed by PostgreSQL — containerized with Docker and accelerated by an optional Redis cache.
 
-```text
- React SPA  ──HTTP/JSON, JWT──▶  FastAPI  ──SQL──▶  PostgreSQL
-(Vite, TS,  ◀──────────────────  (SQLAlchemy,          │
- Tailwind)                        Pydantic)     ◀──optional cache──▶  Redis
+<details open>
+<summary><strong>View diagram</strong></summary>
+
+```mermaid
+flowchart TB
+    subgraph Presentation["Presentation Layer"]
+        UI["React SPA<br/>(Vite, TypeScript, Tailwind)"]
+    end
+
+    subgraph API["API Layer"]
+        Routes["FastAPI Routes<br/>request validation &amp; auth guards"]
+    end
+
+    subgraph Logic["Application / Decision Logic"]
+        Rec["Elective Recommendation<br/>(basket-based, 6-factor scoring)"]
+        Backlog["Backlog Prioritization"]
+        Booking["Slot Booking"]
+        Admin["Admin Services"]
+    end
+
+    subgraph Data["Data Access &amp; Storage"]
+        ORM["SQLAlchemy ORM"]
+        PG[(PostgreSQL)]
+        Redis[(Redis<br/>optional cache)]
+    end
+
+    UI -->|"HTTP / JSON<br/>JWT Bearer Token"| Routes
+    Routes --> Rec
+    Routes --> Backlog
+    Routes --> Booking
+    Routes --> Admin
+
+    Rec --> ORM
+    Backlog --> ORM
+    Booking --> ORM
+    Admin --> ORM
+    ORM --> PG
+
+    Rec -.->|read-through cache| Redis
+    Admin -.->|faculty/elective<br/>list cache + invalidate| Redis
+    Booking -.->|invalidate on booking| Redis
 ```
+
+</details>
 
 | Layer | Responsibility |
 |---|---|

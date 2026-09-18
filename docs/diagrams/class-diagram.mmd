@@ -1,0 +1,100 @@
+classDiagram
+    class User {
+        +int id
+        +string full_name
+        +string student_id
+        +string email
+        +string hashed_password
+        +string role
+        +datetime created_at
+    }
+
+    class StudentProfile {
+        +int id
+        +int user_id
+        +int semester
+        +string branch
+        +float cgpa
+        +int credits_earned
+        +int credits_required
+        +string career_goal
+        +list~string~ interests
+        +list~string~ skills
+        +string current_basket
+    }
+
+    class Elective {
+        +int id
+        +string code
+        +string title
+        +string department
+        +float credits
+        +string category
+        +string basket
+        +list~string~ topics
+        +list~string~ interest_tags
+        +list~string~ career_tags
+        +int faculty_id
+    }
+
+    class Faculty {
+        +int id
+        +string ref_code
+        +string name
+        +string department
+        +string specialization
+        +list~string~ research_interests
+    }
+
+    class FacultySchedule {
+        +int id
+        +int faculty_id
+        +string day
+        +string start_time
+        +string end_time
+        +string room
+        +string semester
+        +bool is_booked
+    }
+
+    class SlotBooking {
+        +int id
+        +int student_id
+        +int faculty_schedule_id
+        +string status
+        +datetime created_at
+    }
+
+    class Backlog {
+        +int id
+        +int user_id
+        +string subject
+        +string course_code
+        +float credits
+        +string current_grade
+        +string status
+    }
+
+    class AuditLog {
+        +int id
+        +int admin_id
+        +string action
+        +string entity_type
+        +int entity_id
+        +datetime created_at
+    }
+
+    class AcademicConfig {
+        +int id
+        +string key
+        +json value
+        +string description
+    }
+
+    User "1" --> "1" StudentProfile : has
+    User "1" --> "*" Backlog : owns
+    User "1" --> "*" SlotBooking : books
+    User "1" --> "*" AuditLog : performs (as admin)
+    Faculty "1" --> "*" FacultySchedule : offers
+    Faculty "1" --> "*" Elective : teaches
+    FacultySchedule "1" --> "*" SlotBooking : reserved via

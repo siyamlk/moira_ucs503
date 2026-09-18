@@ -59,6 +59,35 @@ the public faculty directory always reflects live booking state.
 admin-side booking visibility is the dedicated Bookings page below, not the
 Schedules page.
 
+## Request Flow
+
+<details open>
+<summary><strong>View diagram</strong></summary>
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI as React SPA
+    participant API as POST /api/bookings
+    participant DB as PostgreSQL
+    participant Cache as Redis
+
+    Student->>UI: Click "Book Slot" on a faculty schedule row
+    UI->>API: POST /api/bookings {faculty_schedule_id} (JWT)
+    API->>DB: check for an existing "booked" row on this slot
+    alt slot already booked
+        API-->>UI: 409 Conflict
+        UI-->>Student: "This slot is already booked"
+    else slot open
+        API->>DB: insert SlotBooking (status = booked)
+        API->>Cache: invalidate faculty:list
+        API-->>UI: 201 Created
+        UI-->>Student: Slot now shows "Booked" / "Cancel Booking"
+    end
+```
+
+</details>
+
 ## Endpoints
 
 All require `Authorization: Bearer <token>` for any authenticated user

@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Student
+    participant UI as React SPA
+    participant API as POST /api/recommendations
+    participant PA as profile_analyzer
+    participant SE as scoring_engine
+    participant BS as basket_service
+    participant DB as PostgreSQL
+
+    Student->>UI: Enter interests, career goals, skills
+    UI->>API: POST /api/recommendations (JWT)
+    API->>PA: analyze_profile(request, stored profile)
+    PA-->>API: interest_tags, career_tags, custom terms
+    API->>DB: fetch eligible electives (branch-filtered)
+    DB-->>API: Elective rows
+    loop each eligible elective
+        API->>SE: score_elective(weights, tags, evidence)
+        SE-->>API: match_percentage + 6-component breakdown
+    end
+    API->>BS: build_basket_recommendations(scored items)
+    BS-->>API: baskets ranked by aggregate match
+    API->>DB: persist profile updates
+    API-->>UI: RecommendationResponse (baskets, courses, weights)
+    UI-->>Student: Ranked baskets, score breakdown, matched evidence

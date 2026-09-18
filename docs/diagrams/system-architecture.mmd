@@ -1,0 +1,37 @@
+flowchart TB
+    subgraph Presentation["Presentation Layer"]
+        UI["React SPA<br/>(Vite, TypeScript, Tailwind)"]
+    end
+
+    subgraph API["API Layer"]
+        Routes["FastAPI Routes<br/>request validation &amp; auth guards"]
+    end
+
+    subgraph Logic["Application / Decision Logic"]
+        Rec["Elective Recommendation<br/>(basket-based, 6-factor scoring)"]
+        Backlog["Backlog Prioritization"]
+        Booking["Slot Booking"]
+        Admin["Admin Services"]
+    end
+
+    subgraph Data["Data Access &amp; Storage"]
+        ORM["SQLAlchemy ORM"]
+        PG[(PostgreSQL)]
+        Redis[(Redis<br/>optional cache)]
+    end
+
+    UI -->|"HTTP / JSON<br/>JWT Bearer Token"| Routes
+    Routes --> Rec
+    Routes --> Backlog
+    Routes --> Booking
+    Routes --> Admin
+
+    Rec --> ORM
+    Backlog --> ORM
+    Booking --> ORM
+    Admin --> ORM
+    ORM --> PG
+
+    Rec -.->|read-through cache| Redis
+    Admin -.->|faculty/elective<br/>list cache + invalidate| Redis
+    Booking -.->|invalidate on booking| Redis
