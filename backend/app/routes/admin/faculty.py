@@ -9,6 +9,7 @@ from app.models.faculty import Faculty
 from app.models.user import User
 from app.schemas.admin import AdminFacultyCreate, AdminFacultyOut, AdminFacultyUpdate
 from app.services.audit_service import record_audit
+from app.services.cache_service import FACULTY_LIST_CACHE_KEY, invalidate
 
 router = APIRouter(prefix="/api/admin/faculty", tags=["admin-faculty"])
 
@@ -44,6 +45,7 @@ def create_faculty(
     record_audit(db, current_user.id, "create", "faculty", faculty.id, {"ref_code": faculty.ref_code})
     db.commit()
     db.refresh(faculty)
+    invalidate(FACULTY_LIST_CACHE_KEY)
     return AdminFacultyOut.model_validate(faculty)
 
 
@@ -73,6 +75,7 @@ def update_faculty(
     record_audit(db, current_user.id, "update", "faculty", faculty.id, {"fields": list(updates.keys())})
     db.commit()
     db.refresh(faculty)
+    invalidate(FACULTY_LIST_CACHE_KEY)
     return AdminFacultyOut.model_validate(faculty)
 
 
@@ -99,3 +102,4 @@ def delete_faculty(
     record_audit(db, current_user.id, "delete", "faculty", faculty.id, {"ref_code": faculty.ref_code})
     db.delete(faculty)
     db.commit()
+    invalidate(FACULTY_LIST_CACHE_KEY)

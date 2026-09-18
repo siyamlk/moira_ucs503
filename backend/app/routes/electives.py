@@ -15,6 +15,7 @@ from app.schemas.elective import (
     ScoreBreakdown,
 )
 from app.schemas.faculty import FacultyOut
+from app.services.cache_service import ELECTIVES_LIST_CACHE_KEY, get_cached, set_cached
 from app.services.recommendation_service import (
     build_explanation,
     normalize_career_goal,
@@ -30,11 +31,23 @@ router = APIRouter(prefix="/api/electives", tags=["electives"])
 def list_electives(
     department: str | None = None, db: Session = Depends(get_db)
 ) -> list[ElectiveOut]:
+    # Only the unfiltered listing is cached — it's what the browse/
+    # recommendation flows hit on every load. A department-filtered request
+    # always reads straight from the DB (see docs/ARCHITECTURE.md).
+    if department is None:
+        cached = get_cached(ELECTIVES_LIST_CACHE_KEY)
+        if cached is not None:
+            return [ElectiveOut.model_validate(e) for e in cached]
+
     query = db.query(Elective).options(joinedload(Elective.faculty))
     if department:
         query = query.filter(Elective.department == department)
     electives = query.all()
-    return [ElectiveOut.model_validate(e) for e in electives]
+    result = [ElectiveOut.model_validate(e) for e in electives]
+
+    if department is None:
+        set_cached(ELECTIVES_LIST_CACHE_KEY, [e.model_dump(mode="json") for e in result])
+    return result
 
 
 @router.get("/{elective_id}", response_model=ElectiveOut)

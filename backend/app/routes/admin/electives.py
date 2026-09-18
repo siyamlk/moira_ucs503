@@ -9,6 +9,7 @@ from app.models.faculty import Faculty
 from app.models.user import User
 from app.schemas.admin import AdminElectiveCreate, AdminElectiveOut, AdminElectiveUpdate
 from app.services.audit_service import record_audit
+from app.services.cache_service import ELECTIVES_LIST_CACHE_KEY, invalidate
 
 router = APIRouter(prefix="/api/admin/electives", tags=["admin-electives"])
 
@@ -64,6 +65,7 @@ def create_elective(
     record_audit(db, current_user.id, "create", "elective", elective.id, {"code": elective.code})
     db.commit()
     db.refresh(elective)
+    invalidate(ELECTIVES_LIST_CACHE_KEY)
     return AdminElectiveOut.model_validate(elective)
 
 
@@ -90,6 +92,7 @@ def update_elective(
     record_audit(db, current_user.id, "update", "elective", elective.id, {"fields": list(updates.keys())})
     db.commit()
     db.refresh(elective)
+    invalidate(ELECTIVES_LIST_CACHE_KEY)
     return AdminElectiveOut.model_validate(elective)
 
 
@@ -105,3 +108,4 @@ def delete_elective(
     record_audit(db, current_user.id, "delete", "elective", elective.id, {"code": elective.code})
     db.delete(elective)
     db.commit()
+    invalidate(ELECTIVES_LIST_CACHE_KEY)

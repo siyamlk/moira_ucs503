@@ -8,6 +8,7 @@ from app.models.faculty_schedule import FacultySchedule
 from app.models.user import User
 from app.schemas.admin import AdminScheduleCreate, AdminScheduleOut, AdminScheduleUpdate
 from app.services.audit_service import record_audit
+from app.services.cache_service import FACULTY_LIST_CACHE_KEY, invalidate
 
 router = APIRouter(prefix="/api/admin/schedules", tags=["admin-schedules"])
 
@@ -45,6 +46,7 @@ def create_schedule(
     )
     db.commit()
     db.refresh(schedule)
+    invalidate(FACULTY_LIST_CACHE_KEY)
     return AdminScheduleOut.model_validate(schedule)
 
 
@@ -70,6 +72,7 @@ def update_schedule(
     )
     db.commit()
     db.refresh(schedule)
+    invalidate(FACULTY_LIST_CACHE_KEY)
     return AdminScheduleOut.model_validate(schedule)
 
 
@@ -85,3 +88,4 @@ def delete_schedule(
     record_audit(db, current_user.id, "delete", "faculty_schedule", schedule.id, None)
     db.delete(schedule)
     db.commit()
+    invalidate(FACULTY_LIST_CACHE_KEY)
