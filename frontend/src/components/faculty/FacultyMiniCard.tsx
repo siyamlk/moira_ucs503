@@ -1,5 +1,5 @@
 import type { Faculty } from "../../types";
-import { formatTime } from "../../utils/format";
+import { ScheduleSlotRow } from "./ScheduleSlotRow";
 
 export function FacultyMiniCard({ faculty }: { faculty: Faculty }) {
   return (
@@ -12,11 +12,9 @@ export function FacultyMiniCard({ faculty }: { faculty: Faculty }) {
         </p>
       )}
       {faculty.schedules.length > 0 ? (
-        <ul className="mt-2 space-y-0.5 text-xs text-ink/70">
+        <ul className="mt-2 space-y-1 text-xs text-ink/70">
           {faculty.schedules.map((s) => (
-            <li key={s.id}>
-              {s.day} &middot; {formatTime(s.start_time)}&ndash;{formatTime(s.end_time)} &middot; {s.room}
-            </li>
+            <ScheduleSlotRow key={s.id} schedule={s} />
           ))}
         </ul>
       ) : (

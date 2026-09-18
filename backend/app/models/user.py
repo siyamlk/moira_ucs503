@@ -27,3 +27,6 @@ class User(Base):
     backlogs: Mapped[list["Backlog"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    bookings: Mapped[list["SlotBooking"]] = relationship(
+        back_populates="student", cascade="all, delete-orphan"
+    )

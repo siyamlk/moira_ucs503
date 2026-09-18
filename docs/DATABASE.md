@@ -95,10 +95,25 @@ defaults (`role` → `'student'`, `semester` → `''`).
 | id | PK | |
 | admin_id | FK → users.id, nullable | who performed the action |
 | action | string | `"create"` \| `"update"` \| `"delete"` |
-| entity_type | string | e.g. `"elective"`, `"faculty"`, `"faculty_schedule"`, `"academic_config"` |
+| entity_type | string | e.g. `"elective"`, `"faculty"`, `"faculty_schedule"`, `"academic_config"`, `"slot_booking"` (admin force-cancel only — a student's own cancel is not an admin action) |
 | entity_id | int, nullable | |
 | details | JSON, nullable | small free-form context, e.g. `{"code": "UCS900"}` or `{"fields": ["title"]}` |
 | created_at | datetime | indexed, written by every admin mutation — see `docs/ADMIN.md` |
+
+### `slot_bookings` (N:1 with `users` and `faculty_schedules`)
+| Column | Type | Notes |
+|---|---|---|
+| id | PK | |
+| student_id | FK → users.id | who booked the slot |
+| faculty_schedule_id | FK → faculty_schedules.id | which slot |
+| status | string | `booked` \| `cancelled` |
+| created_at | datetime | |
+
+At most one `"booked"` row can exist per `faculty_schedule_id` at a time,
+enforced at request time in `routes/bookings.py` rather than a database
+constraint (same pattern as the `ref_code`/`(code, department)` uniqueness
+checks elsewhere). A cancelled row is kept, not deleted, so booking history
+stays auditable. See `docs/BOOKING.md`.
 
 ### `academic_config`
 | Column | Type | Notes |
@@ -123,6 +138,8 @@ User 1───N Backlog
 User 1───N AuditLog        (as the acting admin)
 Faculty 1───N FacultySchedule
 Faculty 1───N Elective
+User 1───N SlotBooking
+FacultySchedule 1───N SlotBooking
 ```
 
 ## Seed data
@@ -136,11 +153,16 @@ Faculty 1───N Elective
   Professional Elective baskets transcribed from the official 2025 B.E.
   CSE/COE course scheme documents.
 
+It also seeds a handful of **demo office-hour slots** (`seed_demo_schedules`
+— 1–3 `FacultySchedule` rows each for six faculty) purely so the Slot
+Booking feature (`docs/BOOKING.md`) has something real to click through
+locally; these are clearly-labeled placeholders, not real timetable data.
+
 It also seeds one **demo student account**
 (`alex.chen@thapar.edu` / `Demo@1234`) with a sample profile and 3 pending
 backlogs, clearly a demo account (not sourced from any real record), so the
 app can be tried immediately without signing up, plus one **dev admin
-account** (`admin@moira.local` / `AdminPass123!`, `role="admin"` — rotate or
+account** (`admin@moira.app` / `AdminPass123!`, `role="admin"` — rotate or
 remove before any real deployment, see `docs/ADMIN.md`) and the initial
 `academic_config` rows (`recommendation_weights`, `elective_categories`).
 Mechanical, Civil, and ENC branch data is not yet included — add a CSV + a

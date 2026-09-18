@@ -6,6 +6,7 @@ from app.database.connection import get_db
 from app.models.audit_log import AuditLog
 from app.models.elective import Elective
 from app.models.faculty import Faculty
+from app.models.slot_booking import SlotBooking
 from app.models.user import User
 from app.schemas.admin import AuditLogOut, DashboardOut
 
@@ -20,11 +21,13 @@ def get_dashboard(
     total_faculty = db.query(Faculty).count()
     total_baskets = len({b for (b,) in db.query(Elective.basket).distinct().all() if b})
     total_categories = len({c for (c,) in db.query(Elective.category).distinct().all() if c})
+    total_active_bookings = db.query(SlotBooking).filter(SlotBooking.status == "booked").count()
     recent = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(10).all()
     return DashboardOut(
         total_electives=total_electives,
         total_faculty=total_faculty,
         total_baskets=total_baskets,
         total_categories=total_categories,
+        total_active_bookings=total_active_bookings,
         recent_activity=[AuditLogOut.model_validate(a) for a in recent],
     )

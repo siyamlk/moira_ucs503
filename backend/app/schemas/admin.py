@@ -166,4 +166,17 @@ class DashboardOut(BaseModel):
     total_faculty: int
     total_baskets: int
     total_categories: int
+    total_active_bookings: int
     recent_activity: list[AuditLogOut]
+
+
+class AdminBookingOut(BaseModel):
+    id: int
+    student_id: int
+    student_name: str
+    student_email: str
+    faculty_id: int
+    faculty_name: str
+    schedule: ScheduleOut
+    status: str
+    created_at: datetime

@@ -91,6 +91,7 @@ Full reference: `docs/API.md#admin`. Summary:
 | Electives | `GET/POST /api/admin/electives`, `PUT/DELETE /api/admin/electives/{id}` |
 | Faculty | `GET/POST /api/admin/faculty`, `PUT/DELETE /api/admin/faculty/{id}` |
 | Schedules | `GET/POST /api/admin/schedules`, `PUT/DELETE /api/admin/schedules/{id}` |
+| Bookings | `GET /api/admin/bookings`, `DELETE /api/admin/bookings/{id}` |
 | Config | `GET /api/admin/config`, `GET/PUT /api/admin/config/{key}` |
 | Audit log | `GET /api/admin/audit-log` |
 
@@ -128,7 +129,7 @@ saved.
 ## Frontend
 
 - `/admin`, `/admin/electives`, `/admin/faculty`, `/admin/schedules`,
-  `/admin/config` — nested under `AdminRoute` + `AdminLayout`
+  `/admin/bookings`, `/admin/config` — nested under `AdminRoute` + `AdminLayout`
   (`frontend/src/layouts/AdminLayout.tsx`), structurally parallel to the
   student area's `ProtectedRoute` + `AppLayout`, sharing the same auth
   context, Axios client (`services/api.ts`), and Tailwind design tokens —

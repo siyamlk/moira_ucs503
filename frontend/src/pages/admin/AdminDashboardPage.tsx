@@ -51,14 +51,15 @@ export function AdminDashboardPage() {
         <LoadingState label="Loading dashboard..." />
       ) : stats ? (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <StatTile label="Electives" value={stats.total_electives} />
             <StatTile label="Faculty" value={stats.total_faculty} />
             <StatTile label="EFB Baskets" value={stats.total_baskets} />
             <StatTile label="Categories" value={stats.total_categories} />
+            <StatTile label="Active Bookings" value={stats.total_active_bookings} />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <Link to="/admin/electives" className="btn-outline justify-center">
               Manage Electives
             </Link>
@@ -67,6 +68,9 @@ export function AdminDashboardPage() {
             </Link>
             <Link to="/admin/schedules" className="btn-outline justify-center">
               Manage Schedules
+            </Link>
+            <Link to="/admin/bookings" className="btn-outline justify-center">
+              Manage Bookings
             </Link>
             <Link to="/admin/config" className="btn-outline justify-center">
               Manage Rules

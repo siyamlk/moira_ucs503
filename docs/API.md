@@ -107,6 +107,25 @@ backlogs by estimated CGPA impact. → `200`:
 ```
 Formula: `docs/BACKLOG_LOGIC.md`.
 
+## Bookings
+
+Student-facing reservation of a real, admin-entered `FacultySchedule` slot.
+See `docs/BOOKING.md` for the full design (why it only ever operates on real
+schedule data, never fabricated availability).
+
+### `GET /api/bookings`
+Auth required. → `200` the caller's own active (`status="booked"`) bookings,
+each with the nested `schedule`.
+
+### `POST /api/bookings`
+Auth required. Body: `{ "faculty_schedule_id": <id> }` → `201` created
+booking. `404` if the slot doesn't exist. `409` if it's already booked (by
+any student).
+
+### `DELETE /api/bookings/{id}`
+Auth required. → `204`, or `404` if the booking doesn't exist or belongs to
+someone else. Cancelling frees the slot for another student to book.
+
 ## Admin
 
 All endpoints below require `Authorization: Bearer <token>` for a user whose
@@ -116,7 +135,7 @@ unauthenticated callers get `401`. See `docs/ADMIN.md` for the full
 authorization model, data model, and workflows.
 
 ### `GET /api/admin/dashboard`
-→ `200` `{ total_electives, total_faculty, total_baskets, total_categories, recent_activity: AuditLogOut[] }`.
+→ `200` `{ total_electives, total_faculty, total_baskets, total_categories, total_active_bookings, recent_activity: AuditLogOut[] }`.
 
 ### Electives — `GET/POST /api/admin/electives`, `PUT/DELETE /api/admin/electives/{id}`
 `GET` accepts optional `search`, `department`, `category`, `basket` query
@@ -136,6 +155,16 @@ faculty member (reassign or clear `faculty_id` first); their own
 `GET` accepts optional `faculty_id`. Body includes `semester` (free text,
 e.g. `"Odd 2026-27"`, empty = standing slot). `400` on an unknown
 `faculty_id`.
+
+### Bookings — `GET /api/admin/bookings`, `DELETE /api/admin/bookings/{id}`
+Admin visibility over every student's slot bookings (the student-facing
+`/api/bookings` endpoints only ever show the caller's own). `GET` accepts
+optional `faculty_id`, returns both active and cancelled bookings
+(newest first), each with the student's name/email, the faculty name, and
+the nested schedule slot. `DELETE` force-cancels any booking regardless of
+who made it — e.g. when a professor cancels their office hours — and is
+recorded in the audit log same as any other admin mutation. See
+`docs/BOOKING.md`.
 
 ### Config — `GET /api/admin/config`, `GET/PUT /api/admin/config/{key}`
 Generic admin-managed key/value store. `PUT` body: `{ value, description? }`.

@@ -52,6 +52,15 @@ export interface FacultySchedule {
   end_time: string;
   room: string;
   note: string;
+  is_booked: boolean;
+}
+
+export interface Booking {
+  id: number;
+  faculty_schedule_id: number;
+  status: string;
+  created_at: string;
+  schedule: FacultySchedule;
 }
 
 export interface Faculty {

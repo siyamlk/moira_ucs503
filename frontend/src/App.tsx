@@ -8,6 +8,7 @@ import { AppLayout } from "./layouts/AppLayout";
 import { BacklogsPage } from "./pages/backlogs/BacklogsPage";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { SignupPage } from "./pages/auth/SignupPage";
+import { AdminBookingsPage } from "./pages/admin/AdminBookingsPage";
 import { AdminConfigPage } from "./pages/admin/AdminConfigPage";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { AdminElectivesPage } from "./pages/admin/AdminElectivesPage";
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/admin/electives" element={<AdminElectivesPage />} />
           <Route path="/admin/faculty" element={<AdminFacultyPage />} />
           <Route path="/admin/schedules" element={<AdminSchedulesPage />} />
+          <Route path="/admin/bookings" element={<AdminBookingsPage />} />
           <Route path="/admin/config" element={<AdminConfigPage />} />
         </Route>
 

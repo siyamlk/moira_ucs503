@@ -20,3 +20,10 @@ class FacultySchedule(Base):
     semester: Mapped[str] = mapped_column(String(40), default="")
 
     faculty: Mapped["Faculty"] = relationship(back_populates="schedules")
+    bookings: Mapped[list["SlotBooking"]] = relationship(
+        back_populates="schedule", cascade="all, delete-orphan"
+    )
+
+    @property
+    def is_booked(self) -> bool:
+        return any(b.status == "booked" for b in self.bookings)

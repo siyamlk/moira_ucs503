@@ -45,6 +45,7 @@ from app.models.academic_config import AcademicConfig
 from app.models.backlog import Backlog
 from app.models.elective import Elective
 from app.models.faculty import Faculty
+from app.models.faculty_schedule import FacultySchedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User
 from app.recommendation.scoring_engine import SCORE_WEIGHTS
@@ -293,6 +294,66 @@ def seed_electives(db) -> None:
     db.commit()
 
 
+# Synthetic office-hour slots for the Slot Booking feature to demo against
+# locally (see docs/BOOKING.md) — no real timetable data exists yet for most
+# departments (README "Current Limitations"), so this is a clearly-labeled
+# demo convenience, the same way seed_demo_user() below is a synthetic
+# account rather than a real student record, not real faculty availability.
+DEMO_SCHEDULE_SLOTS = [
+    {"day": "Monday", "start_time": "09:00", "end_time": "10:00", "room": "Room 101"},
+    {"day": "Monday", "start_time": "14:00", "end_time": "15:00", "room": "Room 214"},
+    {"day": "Tuesday", "start_time": "10:00", "end_time": "11:00", "room": "Room 118"},
+    {"day": "Tuesday", "start_time": "15:00", "end_time": "16:00", "room": "Room 305"},
+    {"day": "Wednesday", "start_time": "11:00", "end_time": "12:00", "room": "Room 214"},
+    {"day": "Thursday", "start_time": "09:00", "end_time": "10:00", "room": "Room 118"},
+    {"day": "Thursday", "start_time": "14:00", "end_time": "15:00", "room": "Room 101"},
+    {"day": "Friday", "start_time": "11:00", "end_time": "12:00", "room": "Room 305"},
+]
+
+# Repeating pattern of how many DEMO_SCHEDULE_SLOTS a given faculty member
+# gets, cycling by index so coverage looks varied rather than a uniform
+# grid — some professors have one office hour, others several.
+DEMO_SCHEDULE_COUNT_CYCLE = [2, 1, 3, 1, 2]
+
+
+def seed_demo_schedules(db) -> None:
+    """Idempotent per faculty member (not a single global guard): skips
+    anyone who already has at least one FacultySchedule row — whether from
+    a previous run of this function or real admin-entered data — and only
+    backfills demo slots for faculty with none, so re-running this (e.g.
+    after adding more faculty via a new CSV) never touches existing data,
+    demo or real."""
+    departments = [source["department"] for source in FACULTY_SOURCES]
+    all_faculty = (
+        db.query(Faculty)
+        .filter(Faculty.department.in_(departments))
+        .order_by(Faculty.department, Faculty.name)
+        .all()
+    )
+    already_scheduled = {
+        row[0] for row in db.query(FacultySchedule.faculty_id).distinct().all()
+    }
+
+    slot_pool_size = len(DEMO_SCHEDULE_SLOTS)
+    added_any = False
+    for i, faculty in enumerate(all_faculty):
+        if faculty.id in already_scheduled:
+            continue
+        # Leave roughly one in six faculty with no schedule at all, so the
+        # directory still shows realistic partial coverage rather than
+        # implying every professor's office hours are on file.
+        if i % 6 == 5:
+            continue
+        count = DEMO_SCHEDULE_COUNT_CYCLE[i % len(DEMO_SCHEDULE_COUNT_CYCLE)]
+        offset = i % slot_pool_size
+        for j in range(count):
+            slot = DEMO_SCHEDULE_SLOTS[(offset + j) % slot_pool_size]
+            db.add(FacultySchedule(faculty_id=faculty.id, semester="Odd 2026-27", **slot))
+        added_any = True
+    if added_any:
+        db.commit()
+
+
 def seed_demo_user(db) -> None:
     if db.query(User).filter(User.email == "alex.chen@thapar.edu").first() is not None:
         return
@@ -374,6 +435,7 @@ def seed() -> None:
     try:
         seed_faculty(db)
         seed_electives(db)
+        seed_demo_schedules(db)
         seed_demo_user(db)
         seed_admin(db)
         seed_academic_config(db)

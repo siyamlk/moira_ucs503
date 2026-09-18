@@ -1,3 +1,5 @@
+import type { FacultySchedule } from "./index";
+
 export interface AdminSchedule {
   id: number;
   faculty_id: number;
@@ -95,6 +97,7 @@ export interface DashboardStats {
   total_faculty: number;
   total_baskets: number;
   total_categories: number;
+  total_active_bookings: number;
   recent_activity: AuditLogEntry[];
 }
 
@@ -110,6 +113,21 @@ export interface AcademicConfig {
 export interface AcademicConfigUpdatePayload {
   value: unknown;
   description?: string;
+}
+
+export interface AdminBooking {
+  id: number;
+  student_id: number;
+  student_name: string;
+  student_email: string;
+  faculty_id: number;
+  faculty_name: string;
+  // The backend nests a plain ScheduleOut here (id/day/start_time/end_time/
+  // room/note/is_booked), not the full AdminSchedule shape — it has no
+  // faculty_id/semester of its own since those already live one level up.
+  schedule: FacultySchedule;
+  status: string;
+  created_at: string;
 }
 
 export interface RecommendationWeights {

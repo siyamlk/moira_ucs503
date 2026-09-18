@@ -5,8 +5,9 @@ from sqlalchemy import inspect, text
 from app.core.config import get_settings
 from app.database.base import Base
 from app.database.connection import engine
-from app.routes import auth, backlogs, electives, faculty, profile, recommendations
+from app.routes import auth, backlogs, bookings, electives, faculty, profile, recommendations
 from app.routes.admin import audit as admin_audit
+from app.routes.admin import bookings as admin_bookings
 from app.routes.admin import config as admin_config
 from app.routes.admin import dashboard as admin_dashboard
 from app.routes.admin import electives as admin_electives
@@ -65,6 +66,7 @@ app.include_router(profile.router)
 app.include_router(electives.router)
 app.include_router(backlogs.router)
 app.include_router(faculty.router)
+app.include_router(bookings.router)
 app.include_router(recommendations.router)
 app.include_router(admin_dashboard.router)
 app.include_router(admin_electives.router)
@@ -72,3 +74,4 @@ app.include_router(admin_faculty.router)
 app.include_router(admin_schedules.router)
 app.include_router(admin_config.router)
 app.include_router(admin_audit.router)
+app.include_router(admin_bookings.router)

@@ -8,6 +8,7 @@ class ScheduleOut(BaseModel):
     end_time: str
     room: str
     note: str
+    is_booked: bool = False
 
     model_config = {"from_attributes": True}
 

@@ -1,5 +1,5 @@
 import type { Faculty } from "../../types";
-import { formatTime } from "../../utils/format";
+import { ScheduleSlotRow } from "./ScheduleSlotRow";
 
 export function FacultyCard({ faculty }: { faculty: Faculty }) {
   return (
@@ -41,11 +41,9 @@ export function FacultyCard({ faculty }: { faculty: Faculty }) {
       <div>
         <p className="label-tag text-ink/50">Office Hours</p>
         {faculty.schedules.length > 0 ? (
-          <ul className="mt-1 space-y-0.5 text-sm text-ink/70">
+          <ul className="mt-1 space-y-1 text-sm text-ink/70">
             {faculty.schedules.map((s) => (
-              <li key={s.id}>
-                {s.day} &middot; {formatTime(s.start_time)}&ndash;{formatTime(s.end_time)} &middot; {s.room}
-              </li>
+              <ScheduleSlotRow key={s.id} schedule={s} />
             ))}
           </ul>
         ) : (

@@ -8,6 +8,7 @@ const LINKS = [
   { to: "/admin/electives", label: "Courses & Electives" },
   { to: "/admin/faculty", label: "Faculty" },
   { to: "/admin/schedules", label: "Schedules" },
+  { to: "/admin/bookings", label: "Bookings" },
   { to: "/admin/config", label: "Rules" },
 ];
 
