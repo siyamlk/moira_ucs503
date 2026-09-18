@@ -56,17 +56,15 @@ flowchart LR
 
         UC7(["Manage Profile<br/>(Interests, Career Goals, Academic Info)"])
         UC8(["View Recommendation<br/>Details & Rationale"])
-        UC9(["Provide Feedback /<br/>Rate Elective"])
-        UC10(["View Backlog<br/>Impact on CGPA"])
-        UC11(["Set Target CGPA"])
-        UC12(["View Faculty Schedule<br/>& Availability"])
-        UC13(["View Faculty Meeting<br/>Hours & Location"])
+        UC9(["View Backlog<br/>Impact on CGPA"])
+        UC10(["View Faculty Schedule<br/>& Availability"])
+        UC11(["View Faculty Meeting<br/>Hours & Location"])
 
-        UC14(["Manage Course &<br/>Elective Metadata"])
-        UC15(["Manage Faculty<br/>Directory & Schedules"])
-        UC16(["View & Force-Cancel<br/>Student Bookings"])
-        UC17(["Manage Academic<br/>Configuration"])
-        UC18(["View Audit Log"])
+        UC12(["Manage Course &<br/>Elective Metadata"])
+        UC13(["Manage Faculty<br/>Directory & Schedules"])
+        UC14(["View & Force-Cancel<br/>Student Bookings"])
+        UC15(["Manage Academic<br/>Configuration"])
+        UC16(["View Audit Log"])
     end
 
     Student --> UC1
@@ -79,20 +77,18 @@ flowchart LR
     UC2 -.->|"«extend»"| UC1
     UC1 -.->|"«include»"| UC7
     UC3 -.->|"«include»"| UC8
-    UC3 -.->|"«include»"| UC9
-    UC4 -.->|"«include»"| UC10
-    UC4 -.->|"«include»"| UC11
-    UC5 -.->|"«include»"| UC12
-    UC8 -.->|"«include»"| UC13
+    UC4 -.->|"«include»"| UC9
+    UC5 -.->|"«include»"| UC10
+    UC8 -.->|"«include»"| UC11
 
-    UC12 --> Faculty
-    UC13 --> Faculty
+    UC10 --> Faculty
+    UC11 --> Faculty
 
+    Admin --> UC12
+    Admin --> UC13
     Admin --> UC14
     Admin --> UC15
     Admin --> UC16
-    Admin --> UC17
-    Admin --> UC18
 
     classDef core fill:#d4bd8c,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
     classDef included fill:#f3e8ce,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
@@ -100,8 +96,8 @@ flowchart LR
     classDef actor fill:#fbf5e8,stroke:#2b2016,stroke-width:3px,color:#2b2016
 
     class UC1,UC2,UC3,UC4,UC5,UC6 core
-    class UC7,UC8,UC9,UC10,UC11,UC12,UC13 included
-    class UC14,UC15,UC16,UC17,UC18 adminUC
+    class UC7,UC8,UC9,UC10,UC11 included
+    class UC12,UC13,UC14,UC15,UC16 adminUC
     class Student,Faculty,Admin actor
 ```
 
@@ -145,7 +141,7 @@ flowchart LR
 
 Faculty schedule coverage is currently partial (see *Current Limitations*); a small set of clearly-labeled seeded demo slots exists so the feature has something real to demonstrate until each department supplies real office-hour data.
 
-<details>
+<details open>
 <summary><strong>View booking request flow</strong></summary>
 
 ```mermaid
@@ -248,6 +244,118 @@ flowchart TB
 
 Full breakdown, request lifecycle, and the Docker/CI/caching design: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## Data Model
+
+<details open>
+<summary><strong>View diagram</strong></summary>
+
+```mermaid
+classDiagram
+    class User {
+        +int id
+        +string full_name
+        +string student_id
+        +string email
+        +string hashed_password
+        +string role
+        +datetime created_at
+    }
+
+    class StudentProfile {
+        +int id
+        +int user_id
+        +int semester
+        +string branch
+        +float cgpa
+        +int credits_earned
+        +int credits_required
+        +string career_goal
+        +list~string~ interests
+        +list~string~ skills
+        +string current_basket
+    }
+
+    class Elective {
+        +int id
+        +string code
+        +string title
+        +string department
+        +float credits
+        +string category
+        +string basket
+        +list~string~ topics
+        +list~string~ interest_tags
+        +list~string~ career_tags
+        +int faculty_id
+    }
+
+    class Faculty {
+        +int id
+        +string ref_code
+        +string name
+        +string department
+        +string specialization
+        +list~string~ research_interests
+    }
+
+    class FacultySchedule {
+        +int id
+        +int faculty_id
+        +string day
+        +string start_time
+        +string end_time
+        +string room
+        +string semester
+        +bool is_booked
+    }
+
+    class SlotBooking {
+        +int id
+        +int student_id
+        +int faculty_schedule_id
+        +string status
+        +datetime created_at
+    }
+
+    class Backlog {
+        +int id
+        +int user_id
+        +string subject
+        +string course_code
+        +float credits
+        +string current_grade
+        +string status
+    }
+
+    class AuditLog {
+        +int id
+        +int admin_id
+        +string action
+        +string entity_type
+        +int entity_id
+        +datetime created_at
+    }
+
+    class AcademicConfig {
+        +int id
+        +string key
+        +json value
+        +string description
+    }
+
+    User "1" --> "1" StudentProfile : has
+    User "1" --> "*" Backlog : owns
+    User "1" --> "*" SlotBooking : books
+    User "1" --> "*" AuditLog : performs (as admin)
+    Faculty "1" --> "*" FacultySchedule : offers
+    Faculty "1" --> "*" Elective : teaches
+    FacultySchedule "1" --> "*" SlotBooking : reserved via
+```
+
+</details>
+
+Full schema, including columns not shown here: [`docs/DATABASE.md`](docs/DATABASE.md)
+
 ---
 
 # Decision Engines
@@ -268,6 +376,38 @@ MOIRA's Elective Advisor is **deterministic, rule-based, and fully auditable** �
 Weights are admin-configurable and must sum to 100 (`PUT /api/admin/config/recommendation_weights`) — retuning changes how much each factor counts, never what is measured or how the score is computed.
 
 Recommendations are grouped and ranked at the **basket level**: a student commits to one Elective Focus Basket and is shown its four member courses together, with the basket's own aggregate match. Results are filtered to the student's own branch plus open/generic electives, and once a basket is committed to, remaining slots are locked to it.
+
+<details open>
+<summary><strong>View recommendation request flow</strong></summary>
+
+```mermaid
+sequenceDiagram
+    actor Student
+    participant UI as React SPA
+    participant API as POST /api/recommendations
+    participant PA as profile_analyzer
+    participant SE as scoring_engine
+    participant BS as basket_service
+    participant DB as PostgreSQL
+
+    Student->>UI: Enter interests, career goals, skills
+    UI->>API: POST /api/recommendations (JWT)
+    API->>PA: analyze_profile(request, stored profile)
+    PA-->>API: interest_tags, career_tags, custom terms
+    API->>DB: fetch eligible electives (branch-filtered)
+    DB-->>API: Elective rows
+    loop each eligible elective
+        API->>SE: score_elective(weights, tags, evidence)
+        SE-->>API: match_percentage + 6-component breakdown
+    end
+    API->>BS: build_basket_recommendations(scored items)
+    BS-->>API: baskets ranked by aggregate match
+    API->>DB: persist profile updates
+    API-->>UI: RecommendationResponse (baskets, courses, weights)
+    UI-->>Student: Ranked baskets, score breakdown, matched evidence
+```
+
+</details>
 
 Detailed formula: [`docs/RECOMMENDATION_LOGIC.md`](docs/RECOMMENDATION_LOGIC.md)
 

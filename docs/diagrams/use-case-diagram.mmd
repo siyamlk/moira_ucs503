@@ -15,17 +15,15 @@ flowchart LR
 
         UC7(["Manage Profile<br/>(Interests, Career Goals, Academic Info)"])
         UC8(["View Recommendation<br/>Details & Rationale"])
-        UC9(["Provide Feedback /<br/>Rate Elective"])
-        UC10(["View Backlog<br/>Impact on CGPA"])
-        UC11(["Set Target CGPA"])
-        UC12(["View Faculty Schedule<br/>& Availability"])
-        UC13(["View Faculty Meeting<br/>Hours & Location"])
+        UC9(["View Backlog<br/>Impact on CGPA"])
+        UC10(["View Faculty Schedule<br/>& Availability"])
+        UC11(["View Faculty Meeting<br/>Hours & Location"])
 
-        UC14(["Manage Course &<br/>Elective Metadata"])
-        UC15(["Manage Faculty<br/>Directory & Schedules"])
-        UC16(["View & Force-Cancel<br/>Student Bookings"])
-        UC17(["Manage Academic<br/>Configuration"])
-        UC18(["View Audit Log"])
+        UC12(["Manage Course &<br/>Elective Metadata"])
+        UC13(["Manage Faculty<br/>Directory & Schedules"])
+        UC14(["View & Force-Cancel<br/>Student Bookings"])
+        UC15(["Manage Academic<br/>Configuration"])
+        UC16(["View Audit Log"])
     end
 
     Student --> UC1
@@ -38,20 +36,18 @@ flowchart LR
     UC2 -.->|"«extend»"| UC1
     UC1 -.->|"«include»"| UC7
     UC3 -.->|"«include»"| UC8
-    UC3 -.->|"«include»"| UC9
-    UC4 -.->|"«include»"| UC10
-    UC4 -.->|"«include»"| UC11
-    UC5 -.->|"«include»"| UC12
-    UC8 -.->|"«include»"| UC13
+    UC4 -.->|"«include»"| UC9
+    UC5 -.->|"«include»"| UC10
+    UC8 -.->|"«include»"| UC11
 
-    UC12 --> Faculty
-    UC13 --> Faculty
+    UC10 --> Faculty
+    UC11 --> Faculty
 
+    Admin --> UC12
+    Admin --> UC13
     Admin --> UC14
     Admin --> UC15
     Admin --> UC16
-    Admin --> UC17
-    Admin --> UC18
 
     classDef core fill:#d4bd8c,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
     classDef included fill:#f3e8ce,stroke:#6b4f2a,stroke-width:2px,color:#2b2016
@@ -59,6 +55,6 @@ flowchart LR
     classDef actor fill:#fbf5e8,stroke:#2b2016,stroke-width:3px,color:#2b2016
 
     class UC1,UC2,UC3,UC4,UC5,UC6 core
-    class UC7,UC8,UC9,UC10,UC11,UC12,UC13 included
-    class UC14,UC15,UC16,UC17,UC18 adminUC
+    class UC7,UC8,UC9,UC10,UC11 included
+    class UC12,UC13,UC14,UC15,UC16 adminUC
     class Student,Faculty,Admin actor
