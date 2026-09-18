@@ -79,14 +79,20 @@ consumes it" flow for `recommendation_weights`: `docs/ADMIN.md`.
 ## Request lifecycle example (Elective Advisor)
 
 ```
-React form (interests + career goal + free text)
-  → electiveService.recommend()
-    → POST /api/electives/recommend  (JWT attached)
-      → routes/electives.py: normalize_interests/normalize_career_goal
-        → services/recommendation_service.score_elective() for each Elective row
-          → sorted, top + alternatives returned with attached Faculty + FacultySchedule
-      → profile.interests/career_goal/raw_intent_text persisted to Postgres
-  → React renders ranked cards with match %, explanation, matched topics, faculty office hours
+React form (interests, career goals, skills, free text)
+  → recommendationService.recommend()
+    → POST /api/recommendations  (JWT attached)
+      → routes/recommendations.py
+        → recommendation/profile_analyzer.analyze_profile() — tags + custom interest terms
+        → recommendation/recommendation_service.generate_recommendations()
+            → app/services/academic_config_service.get_recommendation_weights() (admin-tunable)
+            → recommendation/scoring_engine.score_elective() for each eligible Elective row
+            → recommendation/basket_service.build_basket_recommendations() — group by EFB basket
+            → recommendation/explanation_service.build_recommendation_texts()
+          → basket-level + individual-course results, sorted, with score breakdowns
+      → profile fields persisted to Postgres
+  → React renders ranked basket + course cards with score breakdown, matched evidence,
+    prerequisite checklist, and attached Faculty + FacultySchedule
 ```
 
 ## Docker & CI/CD

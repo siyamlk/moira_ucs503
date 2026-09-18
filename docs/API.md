@@ -42,29 +42,68 @@ hours).
 ### `GET /api/electives/{id}`
 No auth. → `200` `ElectiveOut`, or `404`.
 
-### `POST /api/electives/recommend`
-Auth required. Body:
-```json
-{ "free_text": "I enjoy AI and data...", "interests": ["Cybersecurity"], "career_goal": "AI/ML Engineer" }
-```
-→ `200`:
+### `POST /api/electives/recommend` (legacy)
+Auth required. A simplified, single-course, 4-factor scoring path retained
+for backward compatibility (`services/recommendation_service.py`) — not
+linked from the primary navigation. New work should use
+`POST /api/recommendations` below.
+
+## Recommendations
+
+### `POST /api/recommendations`
+Auth required. The current elective advisor: basket-level, 6-factor,
+admin-tunable scoring. See `docs/RECOMMENDATION_LOGIC.md` for the full
+formula.
+
+Body (`RecommendationRequest`) — every field optional; an omitted
+`student_profile` reuses whatever's already on the caller's stored profile:
 ```json
 {
-  "interpreted_tags": ["Cybersecurity", "Artificial Intelligence", "Data Science"],
-  "career_goal": "AI/ML Engineer",
-  "top_recommendation": {
-    "elective": { "...": "ElectiveOut" },
-    "match_percent": 92,
-    "interest_match": true,
-    "career_match": true,
-    "matched_topics": ["Artificial Intelligence", "Machine Learning"],
-    "explanation": "..."
+  "student_profile": {
+    "interests": ["Artificial Intelligence", "Data Science"],
+    "career_goals": ["AI/ML Engineer"],
+    "skills": ["Python", "Docker"],
+    "completed_courses": ["Data Structures"],
+    "free_text": "I enjoy AI, data analysis, and want to work in healthcare predictive systems.",
+    "current_basket": ""
   },
-  "alternatives": [ "...up to 5 more RecommendationOut objects" ]
+  "elective_slot": "Elective I"
 }
 ```
-Also persists the interpreted tags, career goal and raw text onto the
-caller's `StudentProfile`. Scoring formula: `docs/RECOMMENDATION_LOGIC.md`.
+
+→ `200` (`RecommendationResponse`):
+```json
+{
+  "interpreted_interests": ["Artificial Intelligence", "Data Science"],
+  "interpreted_career_goals": ["AI/ML Engineer"],
+  "elective_slot": "Elective I",
+  "current_basket": null,
+  "available_baskets": ["Data Science", "DevOps and Continuous Delivery", "..."],
+  "primary_basket": {
+    "basket_name": "Data Science",
+    "match_percentage": 88,
+    "electives": [ "...RecommendationItem per course in the basket" ],
+    "matched_interests": ["Artificial Intelligence", "Data Science"],
+    "matched_career_goals": ["AI/ML Engineer"],
+    "why_this_basket_matches": "..."
+  },
+  "alternative_baskets": [ "...up to 3 more BasketRecommendationOut" ],
+  "all_baskets": [ "...every basket, ranked" ],
+  "primary_recommendation": { "...": "RecommendationItem — top single course" },
+  "alternatives": [ "...up to 5 more RecommendationItem" ],
+  "all_eligible_courses": [ "...every eligible course, for compare/browse views" ],
+  "weights": { "interest": 25, "career": 25, "syllabus": 20, "skill": 15, "academic": 10, "prerequisite": 5 },
+  "branch_warning": null
+}
+```
+
+Each `RecommendationItem` carries `match_percentage`, a full
+`score_breakdown` (all six components, earned vs. max), matched interests/
+career goals/skills/syllabus lines, a `prerequisite_checks` list, and
+several human-readable explanation strings. `weights` echoes whatever the
+admin currently has configured, so the response is self-documenting about
+how its own score was computed. Persists the caller's submitted profile
+fields back onto their `StudentProfile`.
 
 ## Faculty
 
